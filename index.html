@@ -499,6 +499,19 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
                 }
             };
 
+            // Check if there's saved progress
+            const hasSavedProgress = () => {
+                return localStorage.getItem('module2Progress') !== null;
+            };
+
+            // Reset all progress
+            const handleReset = () => {
+                if (window.confirm('This will permanently delete ALL your saved progress and start completely fresh. Are you sure?')) {
+                    localStorage.clear();
+                    window.location.reload();
+                }
+            };
+
             return (
                 <div className="fade-in max-w-2xl mx-auto">
                     <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
@@ -612,6 +625,23 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
                             </button>
                         </form>
                     </div>
+
+                    {/* Reset Button - Only shown if there's saved progress */}
+                    {hasSavedProgress() && (
+                        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 mt-6">
+                            <h3 className="text-lg font-bold text-red-900 mb-3">⚠️ Start Completely Over?</h3>
+                            <p className="text-gray-700 mb-4 text-sm">
+                                If you want to practice from scratch and delete all saved progress, click below. 
+                                <strong> This cannot be undone.</strong>
+                            </p>
+                            <button
+                                onClick={handleReset}
+                                className="w-full bg-red-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                            >
+                                🗑️ Clear All Progress & Start Fresh
+                            </button>
+                        </div>
+                    )}
                 </div>
             );
         }
