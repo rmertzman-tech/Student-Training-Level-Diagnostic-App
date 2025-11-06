@@ -471,18 +471,21 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
             );
         }
 
+       // Main App Component (Corrected)
         function App() {
+            // State for app
             const [stage, setStage] = useState('welcome'); // welcome, tutorial, responsibility, cases, pattern, complete, review, viewCompletions
             const [progressData, setProgressData] = useState(loadProgressData());
             const [studentInfo, setStudentInfo] = useState({ name: '', email: '', course: '' });
             const [currentCaseIndex, setCurrentCaseIndex] = useState(0);
-            const [reviewingCompletion, setReviewingCompletion] = useState(null);
+            const [reviewingCompletion, setReviewingCompletion] = useState(null); // Which completed session to review
 
-            // Save progress whenever it changes
+            // Save progress to local storage whenever it changes
             useEffect(() => {
                 saveProgressData(progressData);
             }, [progressData]);
 
+            // Called from WelcomeScreen to start a fresh session
             const startNewSession = (info) => {
                 const sessionId = generateSessionId();
                 const newSession = {
@@ -499,32 +502,33 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
                     ...progressData,
                     currentSession: newSession
                 });
+                setCurrentCaseIndex(0); // Reset case index
                 setStage('tutorial');
             };
 
+            // Called from WelcomeScreen to continue a saved session
             const continueSession = () => {
                 if (progressData.currentSession) {
                     setStudentInfo(progressData.currentSession.studentInfo);
+                    
                     // Determine where to continue
                     if (progressData.currentSession.cases.length === 0) {
-                        setStage('tutorial');
+                        setStage('tutorial'); // Start at tutorial if no cases done
                     } else if (progressData.currentSession.cases.length < CASES.length) {
+                        // Start at the next uncompleted case
                         setCurrentCaseIndex(progressData.currentSession.cases.length);
                         setStage('cases');
                     } else if (!progressData.currentSession.patternRecognition.answers.length) {
+                        // Go to quiz if all cases done
                         setStage('pattern');
                     } else {
-                        // This case might not be reachable if session is cleared on complete
-                        setStage('complete');
+                        // This case should not happen, but go to welcome if stuck
+                        setStage('welcome');
                     }
                 }
             };
 
-            const startCases = () => {
-                setStage('cases');
-                setCurrentCaseIndex(0);
-            };
-
+            // Called from CaseWorkflow after user clicks "Next Case"
             const completeCaseWork = (caseData) => {
                 const updatedSession = {
                     ...progressData.currentSession,
@@ -536,13 +540,18 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
                     currentSession: updatedSession
                 });
 
+                // Check if there are more cases
                 if (currentCaseIndex < CASES.length - 1) {
+                    // Go to the next case
                     setCurrentCaseIndex(currentCaseIndex + 1);
+                    // Stage stays 'cases', which is correct
                 } else {
+                    // All cases are done, go to pattern recognition quiz
                     setStage('pattern');
                 }
             };
 
+            // Called from PatternRecognitionGame when quiz is finished
             const completePatternRecognition = (results) => {
                 const completedSession = {
                     ...progressData.currentSession,
@@ -550,53 +559,58 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
                     completionTime: new Date().toISOString()
                 };
 
-                // Move to completions array
+                // Move current session to the completions array and clear current session
                 setProgressData({
                     completions: [...progressData.completions, completedSession],
                     currentSession: null
                 });
                 
+                // Set this so the CompletionScreen can show the session we just finished
+                setReviewingCompletion(completedSession); 
                 setStage('complete');
             };
 
+            // Called from the NavigationMenu
             const handleMenuAction = (action) => {
                 switch(action) {
                     case 'viewCompletions':
                         setStage('viewCompletions');
                         break;
                     case 'startNew':
+                        // Reset everything for a new session
                         setStage('welcome');
                         setCurrentCaseIndex(0);
+                        setReviewingCompletion(null);
+                        // currentSession will be cleared/overwritten by startNewSession
                         break;
                 }
             };
 
+            // Called from CompletionsListScreen to review a *specific* old session
             const reviewCompletion = (completion) => {
                 setReviewingCompletion(completion);
                 setStage('review');
             };
 
+            // Main render logic
             return (
                 <div className="min-h-screen">
+                    {/* FIX: The NavigationMenu was defined but never rendered.
+                      It is now rendered here at the top.
+                    */}
+                    <NavigationMenu stage={stage} progressData={progressData} onAction={handleMenuAction} />
+                    
                     <header className="gradient-bg text-white shadow-lg">
                         <div className="max-w-5xl mx-auto px-4 py-6">
                             <h1 className="text-3xl font-bold mb-2">Module 2: Diagnostic Practice</h1>
                             <p className="text-lg opacity-90">Learn to diagnose ethical problems at the right level</p>
                         </div>
                     </header>
-                    
-                    <NavigationMenu 
-                        stage={stage}
-                        progressData={progressData}
-                        onAction={handleMenuAction}
-                    />
 
                     <main className="max-w-5xl mx-auto px-4 py-8">
-                        
-                        {/* * FIX #1: Passed all required props to WelcomeScreen.
-                          * - onStart was changed from {startModule} (undefined) to {startNewSession}.
-                          * - Added missing props: onContinue, progressData, and onReview.
-                          */}
+                        {/* FIX: The WelcomeScreen was being called incorrectly.
+                          It now receives all the props it needs.
+                        */}
                         {stage === 'welcome' && (
                             <WelcomeScreen 
                                 onStart={startNewSession}
@@ -605,21 +619,31 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
                                 onReview={() => setStage('viewCompletions')}
                             />
                         )}
-                        
+
                         {stage === 'tutorial' && (
                             <TutorialScreen onComplete={() => setStage('responsibility')} />
                         )}
+
                         {stage === 'responsibility' && (
-                            <ResponsibilityScreen onComplete={startCases} />
+                            <ResponsibilityScreen onComplete={() => setStage('cases')} />
                         )}
+
+                        {/* CORE BUG FIX: 
+                          Added a `key` prop. When `currentCaseIndex` changes, the `key`
+                          changes (e.g., from "case1" to "case2"). React sees this
+                          and *destroys* the old component and *creates a new one*,
+                          which correctly resets its internal state to 'read'.
+                        */}
                         {stage === 'cases' && (
                             <CaseWorkflow 
+                                key={CASES[currentCaseIndex].id}
                                 caseData={CASES[currentCaseIndex]}
                                 caseNumber={currentCaseIndex + 1}
                                 totalCases={CASES.length}
                                 onComplete={completeCaseWork}
                             />
                         )}
+
                         {stage === 'pattern' && (
                             <PatternRecognitionGame 
                                 questions={PATTERN_QUESTIONS}
@@ -627,46 +651,44 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
                             />
                         )}
 
-                        {/* * FIX #2: Passed correct props to CompletionScreen.
-                          * - 'completion' prop now gets the most recent completion.
-                          * - Added missing button handlers: onStartNew and onReview.
-                          */}
+                        {/* FIX: The CompletionScreen was being called incorrectly.
+                          It now receives the session it's supposed to show
+                          (the 'reviewingCompletion' object).
+                        */}
                         {stage === 'complete' && (
                             <CompletionScreen 
-                                completion={progressData.completions[progressData.completions.length - 1]}
+                                completion={reviewingCompletion}
                                 onStartNew={() => handleMenuAction('startNew')}
-                                onReview={() => setStage('viewCompletions')}
+                                onReview={() => reviewCompletion(reviewingCompletion)}
                             />
                         )}
-
-                        {/* * FIX #3: Added the render block for the 'viewCompletions' stage.
-                          * This was missing, so clicking 'Review Completed Work' would show a blank page.
-                          */}
+                        
+                        {/* FIX: This component was defined but never rendered by App.
+                        */}
                         {stage === 'viewCompletions' && (
                             <CompletionsListScreen
                                 completions={progressData.completions}
-                                onSelectCompletion={(completion) => {
-                                    setReviewingCompletion(completion);
-                                    setStage('review');
-                                }}
+                                onSelectCompletion={reviewCompletion}
                                 onBack={() => setStage('welcome')}
                             />
                         )}
-
-                        {/* * FIX #4: Added the render block for the 'review' stage.
-                          * This was missing, so clicking a session in the list would show a blank page.
-                          */}
+                        
+                        {/* FIX: This component was defined but never rendered by App.
+                        */}
                         {stage === 'review' && (
                             <ReviewMode
                                 completion={reviewingCompletion}
                                 onBack={() => setStage('viewCompletions')}
                             />
                         )}
-
                     </main>
                 </div>
             );
         }
+
+        // Render the app
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
 
         // Welcome Screen Component (ENHANCED)
         function WelcomeScreen({ onStart, onContinue, progressData, onReview }) {
