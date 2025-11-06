@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Module 2: Diagnostic Practice (Enhanced)</title>
+    <title>Module 2: Diagnostic Practice</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -66,24 +66,6 @@
             transition: width 0.5s ease;
         }
         
-        
-        .nav-menu {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-        
-        .menu-dropdown {
-            position: absolute;
-            right: 0;
-            top: 100%;
-            margin-top: 8px;
-            min-width: 250px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        
         @media print {
             body * {
                 visibility: hidden;
@@ -96,9 +78,6 @@
                 left: 0;
                 top: 0;
                 width: 100%;
-            }
-            .nav-menu {
-                display: none;
             }
         }
     </style>
@@ -140,30 +119,6 @@
             if (accuracy >= 70) return 'Developing';
             return 'Novice';
         };
-
-        // Enhanced Storage Management for Multiple Completions
-        const loadProgressData = () => {
-            const saved = localStorage.getItem('module2ProgressEnhanced');
-            if (saved) {
-                return JSON.parse(saved);
-            }
-            return {
-                completions: [], // Array of completed sessions
-                currentSession: null // In-progress session
-            };
-        };
-
-        const saveProgressData = (data) => {
-            localStorage.setItem('module2ProgressEnhanced', JSON.stringify(data));
-        };
-
-        const clearAllProgress = () => {
-            if (confirm('This will delete ALL your saved work and completions. Are you sure?')) {
-                localStorage.removeItem('module2ProgressEnhanced');
-                window.location.reload();
-            }
-        };
-
 
         // Expert Diagnoses Data
         const EXPERT_DIAGNOSES = {
@@ -390,132 +345,71 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
         ];
 
         // Main App Component
-
-        // Navigation Menu Component
-        function NavigationMenu({ stage, progressData, onAction }) {
-            const [isOpen, setIsOpen] = useState(false);
-            const hasCompletions = progressData.completions && progressData.completions.length > 0;
-            const hasCurrentSession = progressData.currentSession !== null;
-
-            return (
-                <div className="nav-menu">
-                    <button
-                        onClick={() => setIsOpen(!isOpen)}
-                        className="bg-white hover:bg-gray-50 text-gray-700 p-3 rounded-lg shadow-lg transition-colors"
-                        title="Menu"
-                    >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
-
-                    {isOpen && (
-                        <div className="menu-dropdown bg-white rounded-lg shadow-2xl border border-gray-200">
-                            <div className="p-4 border-b border-gray-200">
-                                <h3 className="font-bold text-gray-900">Menu</h3>
-                            </div>
-                            
-                            <div className="p-2">
-                                {hasCompletions && (
-                                    <button
-                                        onClick={() => { onAction('viewCompletions'); setIsOpen(false); }}
-                                        className="w-full text-left px-4 py-3 hover:bg-purple-50 rounded flex items-center space-x-2 text-gray-700"
-                                    >
-                                        <span>📋</span>
-                                        <span>Review Completed Work</span>
-                                        <span className="ml-auto bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full">
-                                            {progressData.completions.length}
-                                        </span>
-                                    </button>
-                                )}
-
-                                {stage !== 'welcome' && stage !== 'review' && stage !== 'viewCompletions' && (
-                                    <button
-                                        onClick={() => { 
-                                            if (confirm('Start a new session? Current progress will be saved.')) {
-                                                onAction('startNew'); 
-                                                setIsOpen(false);
-                                            }
-                                        }}
-                                        className="w-full text-left px-4 py-3 hover:bg-blue-50 rounded flex items-center space-x-2 text-gray-700"
-                                    >
-                                        <span>🔄</span>
-                                        <span>Start New Session</span>
-                                    </button>
-                                )}
-
-                                {(hasCompletions || hasCurrentSession) && (
-                                    <button
-                                        onClick={() => { clearAllProgress(); setIsOpen(false); }}
-                                        className="w-full text-left px-4 py-3 hover:bg-red-50 rounded flex items-center space-x-2 text-red-600"
-                                    >
-                                        <span>🗑️</span>
-                                        <span>Clear All Data</span>
-                                    </button>
-                                )}
-
-                                <div className="border-t border-gray-200 my-2"></div>
-
-                                <button
-                                    onClick={() => setIsOpen(false)}
-                                    className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded flex items-center space-x-2 text-gray-500"
-                                >
-                                    <span>✕</span>
-                                    <span>Close Menu</span>
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
         function App() {
-            const [stage, setStage] = useState('welcome'); // welcome, tutorial, responsibility, cases, pattern, complete, review, viewCompletions
-            const [progressData, setProgressData] = useState(loadProgressData());
-            const [studentInfo, setStudentInfo] = useState({ name: '', email: '', course: '' });
+            const [stage, setStage] = useState('welcome'); // welcome, tutorial, responsibility, cases, pattern, complete
+            const [studentInfo, setStudentInfo] = useState({
+                name: '',
+                email: '',
+                course: ''
+            });
+            const [sessionData, setSessionData] = useState({
+                sessionId: '',
+                startTime: null,
+                completionTime: null,
+                cases: [],
+                patternRecognition: {
+                    answers: [],
+                    score: 0
+                }
+            });
             const [currentCaseIndex, setCurrentCaseIndex] = useState(0);
-            const [reviewingCompletion, setReviewingCompletion] = useState(null);
+            const [currentCase, setCurrentCase] = useState(null);
 
-            // Save progress whenever it changes
+            // Load saved progress
             useEffect(() => {
-                saveProgressData(progressData);
-            }, [progressData]);
-
-            const startNewSession = (info) => {
-                const sessionId = generateSessionId();
-                const newSession = {
-                    sessionId,
-                    studentInfo: info,
-                    startTime: new Date().toISOString(),
-                    completionTime: null,
-                    cases: [],
-                    patternRecognition: { answers: [], score: 0 }
-                };
-                
-                setStudentInfo(info);
-                setProgressData({
-                    ...progressData,
-                    currentSession: newSession
-                });
-                setStage('tutorial');
-            };
-
-            const continueSession = () => {
-                if (progressData.currentSession) {
-                    setStudentInfo(progressData.currentSession.studentInfo);
-                    // Determine where to continue
-                    if (progressData.currentSession.cases.length === 0) {
-                        setStage('tutorial');
-                    } else if (progressData.currentSession.cases.length < CASES.length) {
-                        setCurrentCaseIndex(progressData.currentSession.cases.length);
-                        setStage('cases');
-                    } else if (!progressData.currentSession.patternRecognition.answers.length) {
-                        setStage('pattern');
-                    } else {
-                        setStage('complete');
+                const saved = localStorage.getItem('module2Progress');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    if (data.sessionData) {
+                        setSessionData(data.sessionData);
+                    }
+                    if (data.studentInfo) {
+                        setStudentInfo(data.studentInfo);
+                    }
+                    if (data.stage) {
+                        setStage(data.stage);
+                    }
+                    if (data.currentCaseIndex !== undefined) {
+                        setCurrentCaseIndex(data.currentCaseIndex);
                     }
                 }
+            }, []);
+
+            // Save progress
+            useEffect(() => {
+                localStorage.setItem('module2Progress', JSON.stringify({
+                    sessionData,
+                    studentInfo,
+                    stage,
+                    currentCaseIndex
+                }));
+            }, [sessionData, studentInfo, stage, currentCaseIndex]);
+
+            const startModule = (info) => {
+                const sessionId = generateSessionId();
+                const startTime = new Date().toISOString();
+                setStudentInfo(info);
+                setSessionData({
+                    sessionId,
+                    startTime,
+                    completionTime: null,
+                    cases: [],
+                    patternRecognition: {
+                        answers: [],
+                        score: 0
+                    }
+                });
+                setStage('tutorial');
             };
 
             const startCases = () => {
@@ -524,14 +418,10 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
             };
 
             const completeCaseWork = (caseData) => {
-                const updatedSession = {
-                    ...progressData.currentSession,
-                    cases: [...progressData.currentSession.cases, caseData]
-                };
-                
-                setProgressData({
-                    ...progressData,
-                    currentSession: updatedSession
+                const updatedCases = [...sessionData.cases, caseData];
+                setSessionData({
+                    ...sessionData,
+                    cases: updatedCases
                 });
 
                 if (currentCaseIndex < CASES.length - 1) {
@@ -542,36 +432,12 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
             };
 
             const completePatternRecognition = (results) => {
-                const completedSession = {
-                    ...progressData.currentSession,
+                setSessionData({
+                    ...sessionData,
                     patternRecognition: results,
                     completionTime: new Date().toISOString()
-                };
-
-                // Move to completions array
-                setProgressData({
-                    completions: [...progressData.completions, completedSession],
-                    currentSession: null
                 });
-                
                 setStage('complete');
-            };
-
-            const handleMenuAction = (action) => {
-                switch(action) {
-                    case 'viewCompletions':
-                        setStage('viewCompletions');
-                        break;
-                    case 'startNew':
-                        setStage('welcome');
-                        setCurrentCaseIndex(0);
-                        break;
-                }
-            };
-
-            const reviewCompletion = (completion) => {
-                setReviewingCompletion(completion);
-                setStage('review');
             };
 
             return (
@@ -618,11 +484,13 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
             );
         }
 
-        // Welcome Screen Component (ENHANCED)
-        function WelcomeScreen({ onStart, onContinue, progressData, onReview }) {
-            const [formData, setFormData] = useState({ name: '', email: '', course: '' });
-            const hasCurrentSession = progressData.currentSession !== null;
-            const hasCompletions = progressData.completions && progressData.completions.length > 0;
+        // Welcome Screen Component
+        function WelcomeScreen({ onStart }) {
+            const [formData, setFormData] = useState({
+                name: '',
+                email: '',
+                course: ''
+            });
 
             const handleSubmit = (e) => {
                 e.preventDefault();
@@ -632,47 +500,123 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
             };
 
             return (
-                <div className="fade-in max-w-2xl mx-auto space-y-6">
-                    {/* Show saved progress if exists */}
-                    {(hasCurrentSession || hasCompletions) && (
-                        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
-                            <h3 className="text-xl font-bold text-blue-900 mb-4">📂 Saved Progress Found</h3>
+                <div className="fade-in max-w-2xl mx-auto">
+                    <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
+                        <h2 className="text-3xl font-bold text-gray-900 mb-4">Welcome to Diagnostic Practice</h2>
+                        <div className="prose prose-lg">
+                            <p className="text-gray-700 mb-4">
+                                In this module, you'll develop the practical skill of diagnosing ethical problems 
+                                at the right level using the four-level framework:
+                            </p>
+                            <ul className="space-y-2 text-gray-700 mb-6">
+                                <li><strong>Capacity:</strong> Is capacity being suppressed by context?</li>
+                                <li><strong>Capability:</strong> Are reliable methods for coordination missing?</li>
+                                <li><strong>Constructor:</strong> Do patterns persist or depend on individuals?</li>
+                                <li><strong>Meta-Constructor:</strong> Can the system examine and improve itself?</li>
+                            </ul>
                             
-                            {hasCurrentSession && (
-                                <div className="bg-white p-4 rounded-lg mb-4">
-                                    <h4 className="font-semibold text-gray-900 mb-2">In-Progress Session</h4>
-                                    <p className="text-gray-700 mb-2">
-                                        {progressData.currentSession.studentInfo.name}
-                                    </p>
-                                    <p className="text-sm text-gray-600 mb-3">
-                                        Cases completed: {progressData.currentSession.cases.length}/{CASES.length}
-                                    </p>
-                                    <button
-                                        onClick={onContinue}
-                                        className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                                    >
-                                        Continue Where I Left Off →
-                                    </button>
-                                </div>
-                            )}
-
-                            {hasCompletions && (
-                                <div className="bg-white p-4 rounded-lg">
-                                    <h4 className="font-semibold text-gray-900 mb-2">Completed Sessions</h4>
-                                    <p className="text-gray-700 mb-3">
-                                        You have {progressData.completions.length} completed session{progressData.completions.length > 1 ? 's' : ''}
-                                    </p>
-                                    <button
-                                        onClick={onReview}
-                                        className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
-                                    >
-                                        Review Completed Work →
-                                    </button>
-                                </div>
-                            )}
+                            <div className="bg-purple-50 border-l-4 border-purple-500 p-6 mt-6">
+                                <h3 className="text-lg font-bold text-purple-900 mb-2">Why Diagnosis Matters</h3>
+                                <p className="text-gray-700 text-base">
+                                    This isn't just an intellectual exercise. <strong>Misdiagnosis causes real harm:</strong> it 
+                                    wastes resources, blames the wrong people, and leaves root causes untouched. Correct diagnosis 
+                                    determines what intervention can work and who is responsible for implementing it. You'll learn 
+                                    not just to identify problems, but to understand who has the power to fix them and what ethical 
+                                    obligations follow from that power.
+                                </p>
+                            </div>
                         </div>
-                    )}
-// Tutorial Screen Component
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-4">What You'll Do</h3>
+                        <div className="space-y-3">
+                            <div className="flex items-start">
+                                <span className="text-2xl mr-3">📚</span>
+                                <div>
+                                    <p className="font-semibold text-gray-900">Tutorial (5-10 minutes)</p>
+                                    <p className="text-sm text-gray-600">Quick review of the diagnostic framework</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start">
+                                <span className="text-2xl mr-3">🔍</span>
+                                <div>
+                                    <p className="font-semibold text-gray-900">6 Case Studies (90-120 minutes)</p>
+                                    <p className="text-sm text-gray-600">Practice systematic diagnosis with immediate feedback</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start">
+                                <span className="text-2xl mr-3">⚡</span>
+                                <div>
+                                    <p className="font-semibold text-gray-900">Pattern Recognition (10 minutes)</p>
+                                    <p className="text-sm text-gray-600">Quick-fire practice identifying problem levels</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start">
+                                <span className="text-2xl mr-3">📄</span>
+                                <div>
+                                    <p className="font-semibold text-gray-900">Completion Document</p>
+                                    <p className="text-sm text-gray-600">Auto-graded results with 75% accuracy threshold</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-lg p-8">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-4">Before You Begin</h3>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Full Name *
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                    placeholder="Enter your full name"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Email Address *
+                                </label>
+                                <input
+                                    type="email"
+                                    required
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                                    placeholder="your.email@university.edu"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Course/Section *
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    value={formData.course}
+                                    onChange={(e) => setFormData({...formData, course: e.target.value})}
+                                    placeholder="e.g., PHIL 101 - Section 02"
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                            >
+                                Begin Module 2 →
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        // Tutorial Screen Component
         function TutorialScreen({ onComplete }) {
             return (
                 <div className="fade-in max-w-3xl mx-auto">
@@ -1705,9 +1649,7 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
         }
 
         // Completion Screen Component
-        function CompletionScreen({ completion, onStartNew, onReview }) {
-            const sessionData = completion;
-            const studentInfo = completion.studentInfo;
+        function CompletionScreen({ studentInfo, sessionData }) {
             const overallAccuracy = Math.round(
                 (sessionData.cases.reduce((sum, c) => sum + c.accuracy, 0) / sessionData.cases.length)
             );
@@ -2004,7 +1946,12 @@ Generated by Ethical Design Diagnostic Practice Module 2
                                 <li>• When ready, start a new session and try again</li>
                             </ul>
                             <button
-                                onClick={onStartNew}
+                                onClick={() => {
+                                    if (confirm('This will clear your current progress and start fresh. Continue?')) {
+                                        localStorage.removeItem('module2Progress');
+                                        window.location.reload();
+                                    }
+                                }}
                                 className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
                             >
                                 Start New Session
@@ -2012,310 +1959,9 @@ Generated by Ethical Design Diagnostic Practice Module 2
                         </div>
                     )}
 
-                    <div className="bg-white rounded-lg shadow-lg p-8">
-                        <h3 className="text-xl font-bold text-gray-900 mb-4">What's Next?</h3>
-                        <div className="space-y-3">
-                            <button
-                                onClick={onReview}
-                                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center transition-colors"
-                            >
-                                <span className="mr-2">📋</span> Review Your Work
-                            </button>
-                            <button
-                                onClick={onStartNew}
-                                className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 flex items-center justify-center transition-colors"
-                            >
-                                <span className="mr-2">🔄</span> Practice Again (New Session)
-                            </button>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-4 text-center">
-                            Each session is saved separately. You can practice as many times as you want!
-                        </p>
-                    </div>
-
                     <div className="bg-gray-100 rounded-lg p-6 text-center text-sm text-gray-600">
                         <p>Session ID: {sessionData.sessionId}</p>
                         <p>Completed: {new Date(sessionData.completionTime).toLocaleString()}</p>
-                    </div>
-                </div>
-            );
-        }
-
-
-        // Completions List Screen Component
-        function CompletionsListScreen({ completions, onSelectCompletion, onBack }) {
-            const sortedCompletions = [...completions].sort((a, b) => 
-                new Date(b.completionTime) - new Date(a.completionTime)
-            );
-
-            return (
-                <div className="fade-in max-w-4xl mx-auto">
-                    <div className="mb-6">
-                        <button
-                            onClick={onBack}
-                            className="text-purple-600 hover:text-purple-700 flex items-center"
-                        >
-                            ← Back to Welcome
-                        </button>
-                    </div>
-
-                    <div className="bg-white rounded-lg shadow-lg p-8">
-                        <h2 className="text-3xl font-bold text-gray-900 mb-6">Your Completed Sessions</h2>
-                        <p className="text-gray-700 mb-6">
-                            You have completed {completions.length} practice session{completions.length > 1 ? 's' : ''}. 
-                            Click any session to review your work and reasoning.
-                        </p>
-
-                        <div className="space-y-4">
-                            {sortedCompletions.map((completion, index) => {
-                                const overallAccuracy = Math.round(
-                                    completion.cases.reduce((sum, c) => sum + c.accuracy, 0) / completion.cases.length
-                                );
-                                const patternScore = completion.patternRecognition.score;
-                                const patternTotal = completion.patternRecognition.answers.length;
-                                const finalAccuracy = Math.round(overallAccuracy * 0.9 + (patternScore/patternTotal * 100) * 0.1);
-                                const passed = finalAccuracy >= 75;
-
-                                return (
-                                    <div
-                                        key={completion.sessionId}
-                                        onClick={() => onSelectCompletion(completion)}
-                                        className="border-2 rounded-lg p-6 cursor-pointer hover:border-purple-500 hover:shadow-lg transition-all"
-                                    >
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div>
-                                                <h3 className="text-xl font-bold text-gray-900">
-                                                    Session #{sortedCompletions.length - index}
-                                                </h3>
-                                                <p className="text-sm text-gray-600">
-                                                    {completion.studentInfo.name} • {completion.studentInfo.course}
-                                                </p>
-                                                <p className="text-sm text-gray-500">
-                                                    Completed: {new Date(completion.completionTime).toLocaleDateString()} at {new Date(completion.completionTime).toLocaleTimeString()}
-                                                </p>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className={`text-3xl font-bold ${passed ? 'text-green-600' : 'text-yellow-600'}`}>
-                                                    {finalAccuracy}%
-                                                </div>
-                                                <div className={`text-sm font-semibold ${passed ? 'text-green-600' : 'text-yellow-600'}`}>
-                                                    {passed ? '✓ PASSED' : 'Did not pass'}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4 text-sm">
-                                            <div className="bg-gray-50 p-3 rounded">
-                                                <span className="text-gray-600">Cases:</span>
-                                                <span className="ml-2 font-semibold">{completion.cases.length}/6</span>
-                                            </div>
-                                            <div className="bg-gray-50 p-3 rounded">
-                                                <span className="text-gray-600">Pattern Recognition:</span>
-                                                <span className="ml-2 font-semibold">{patternScore}/{patternTotal}</span>
-                                            </div>
-                                        </div>
-
-                                        <p className="text-sm text-gray-500 mt-4">
-                                            Session ID: {completion.sessionId}
-                                        </p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        // Review Mode Component
-        function ReviewMode({ completion, onBack }) {
-            const [selectedCaseIndex, setSelectedCaseIndex] = useState(0);
-            const caseResult = completion.cases[selectedCaseIndex];
-            const caseData = CASES.find(c => c.id === caseResult.caseId);
-            const expertScores = EXPERT_DIAGNOSES[caseResult.caseId];
-
-            const overallAccuracy = Math.round(
-                completion.cases.reduce((sum, c) => sum + c.accuracy, 0) / completion.cases.length
-            );
-            const patternScore = completion.patternRecognition.score;
-            const patternTotal = completion.patternRecognition.answers.length;
-            const finalAccuracy = Math.round(overallAccuracy * 0.9 + (patternScore/patternTotal * 100) * 0.1);
-
-            const generateCompletionDocument = (comp) => {
-                const doc = `Module 2 Completion Document for ${comp.studentInfo.name}
-Session ID: ${comp.sessionId}
-Final Accuracy: ${finalAccuracy}%
-Completed: ${new Date(comp.completionTime).toLocaleString()}`;
-                return doc;
-            };
-
-            const downloadPDF = () => {
-                const doc = generateCompletionDocument(completion);
-                const printWindow = window.open('', '', 'width=800,height=600');
-                printWindow.document.write(`<html><head><title>Completion Document</title></head><body><pre>${doc}</pre></body></html>`);
-                printWindow.document.close();
-                setTimeout(() => printWindow.print(), 250);
-            };
-
-            const copyToClipboard = () => {
-                const doc = generateCompletionDocument(completion);
-                navigator.clipboard.writeText(doc);
-                alert('Copied!');
-            };
-
-            return (
-                <div className="fade-in max-w-5xl mx-auto">
-                    <div className="mb-6">
-                        <button
-                            onClick={onBack}
-                            className="text-purple-600 hover:text-purple-700 flex items-center"
-                        >
-                            ← Back to Completions List
-                        </button>
-                    </div>
-
-                    <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
-                        <h2 className="text-3xl font-bold text-gray-900 mb-4">Review: Session {completion.sessionId}</h2>
-                        
-                        <div className="bg-purple-50 p-6 rounded-lg mb-6">
-                            <div className="grid md:grid-cols-3 gap-4">
-                                <div>
-                                    <div className="text-sm text-gray-600">Student</div>
-                                    <div className="font-semibold">{completion.studentInfo.name}</div>
-                                </div>
-                                <div>
-                                    <div className="text-sm text-gray-600">Completed</div>
-                                    <div className="font-semibold">{new Date(completion.completionTime).toLocaleDateString()}</div>
-                                </div>
-                                <div>
-                                    <div className="text-sm text-gray-600">Final Accuracy</div>
-                                    <div className="text-2xl font-bold text-purple-700">{finalAccuracy}%</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex space-x-3 mb-6">
-                            <button
-                                onClick={downloadPDF}
-                                className="flex-1 bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center justify-center"
-                            >
-                                <span className="mr-2">📄</span> Download Document
-                            </button>
-                            <button
-                                onClick={copyToClipboard}
-                                className="flex-1 bg-gray-200 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-300 transition-colors flex items-center justify-center"
-                            >
-                                <span className="mr-2">📋</span> Copy to Clipboard
-                            </button>
-                        </div>
-
-                        <div className="border-t pt-6">
-                            <h3 className="text-xl font-bold text-gray-900 mb-4">Navigate Cases</h3>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-                                {completion.cases.map((caseRes, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => setSelectedCaseIndex(idx)}
-                                        className={`p-3 rounded-lg text-left transition-all ${
-                                            selectedCaseIndex === idx
-                                                ? 'bg-purple-600 text-white shadow-lg'
-                                                : 'bg-gray-100 hover:bg-gray-200'
-                                        }`}
-                                    >
-                                        <div className="font-semibold">Case {idx + 1}</div>
-                                        <div className="text-sm opacity-90">{caseRes.accuracy}% accuracy</div>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Selected Case Review */}
-                    <div className="bg-white rounded-lg shadow-lg p-8">
-                        <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                            Case {selectedCaseIndex + 1}: {caseData.title}
-                        </h3>
-
-                        <div className="bg-gray-50 p-6 rounded-lg mb-6">
-                            <h4 className="font-semibold text-gray-900 mb-2">Scenario:</h4>
-                            <p className="text-gray-700 text-sm whitespace-pre-line">{caseData.scenario.substring(0, 300)}...</p>
-                        </div>
-
-                        <div className="grid md:grid-cols-2 gap-6 mb-6">
-                            <div>
-                                <h4 className="font-semibold text-gray-900 mb-3">Your Diagnosis</h4>
-                                {['capacity', 'capability', 'constructor', 'metaConstructor'].map(level => {
-                                    const labels = {
-                                        capacity: 'Capacity',
-                                        capability: 'Capability',
-                                        constructor: 'Constructor',
-                                        metaConstructor: 'Meta-Constructor'
-                                    };
-                                    return (
-                                        <div key={level} className="mb-3">
-                                            <div className="flex justify-between mb-1">
-                                                <span className="text-sm">{labels[level]}</span>
-                                                <span className="font-bold text-purple-700">{caseResult.studentScores[level]}%</span>
-                                            </div>
-                                            <div className="w-full bg-gray-200 rounded-full h-4">
-                                                <div 
-                                                    className="score-bar h-4"
-                                                    style={{width: `${caseResult.studentScores[level]}%`}}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-
-                            <div>
-                                <h4 className="font-semibold text-gray-900 mb-3">Expert Diagnosis</h4>
-                                {['capacity', 'capability', 'constructor', 'metaConstructor'].map(level => {
-                                    const labels = {
-                                        capacity: 'Capacity',
-                                        capability: 'Capability',
-                                        constructor: 'Constructor',
-                                        metaConstructor: 'Meta-Constructor'
-                                    };
-                                    const diff = Math.abs(caseResult.studentScores[level] - expertScores[level]);
-                                    return (
-                                        <div key={level} className="mb-3">
-                                            <div className="flex justify-between mb-1">
-                                                <span className="text-sm">{labels[level]}</span>
-                                                <div>
-                                                    <span className="font-bold mr-2">{expertScores[level]}%</span>
-                                                    <span className={diff <= 10 ? 'text-green-600' : diff <= 20 ? 'text-yellow-600' : 'text-red-600'}>
-                                                        {diff <= 10 ? '✓' : diff <= 20 ? '⚠' : '✗'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="w-full bg-gray-200 rounded-full h-4">
-                                                <div 
-                                                    className="bg-gray-600 h-4 rounded-full"
-                                                    style={{width: `${expertScores[level]}%`}}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {caseResult.reasoning && (
-                            <div className="bg-blue-50 p-6 rounded-lg mb-6">
-                                <h4 className="font-semibold text-blue-900 mb-2">Your Reasoning:</h4>
-                                <p className="text-gray-700 whitespace-pre-line">{caseResult.reasoning}</p>
-                            </div>
-                        )}
-
-                        <div className="bg-purple-50 p-6 rounded-lg">
-                            <h4 className="font-semibold text-purple-900 mb-2">Expert Explanation:</h4>
-                            <p className="text-gray-700 mb-4">{expertScores.explanation}</p>
-                            <div className="bg-yellow-100 p-4 rounded border-l-4 border-yellow-500">
-                                <h5 className="font-semibold text-yellow-900 mb-1">Common Mistake:</h5>
-                                <p className="text-gray-700 text-sm">{expertScores.commonMistake}</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             );
