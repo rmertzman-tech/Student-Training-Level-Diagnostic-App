@@ -107,209 +107,209 @@
     <div id="root"></div>
 
     <script type="text/babel">
-      const { useState, useEffect } = React;
+        const { useState, useEffect } = React;
 
-    // Utility Functions
-    const generateSessionId = () => {
-        const date = new Date();
-        const dateStr = date.toISOString().slice(0,10).replace(/-/g, '');
-        const timeStr = date.toTimeString().slice(0,5).replace(/:/g, '');
-        const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-        return `M2-${dateStr}-${timeStr}-${random}`;
-    };
-
-    const calculateAccuracy = (studentScores, expertScores) => {
-        const capacityDiff = Math.abs(studentScores.capacity - expertScores.capacity);
-        const capabilityDiff = Math.abs(studentScores.capability - expertScores.capability);
-        const constructorDiff = Math.abs(studentScores.constructor - expertScores.constructor);
-        const metaConstructorDiff = Math.abs(studentScores.metaConstructor - expertScores.metaConstructor);
-        
-        const avgDiff = (capacityDiff + capabilityDiff + constructorDiff + metaConstructorDiff) / 4;
-        let accuracy = Math.max(0, 100 - avgDiff);
-        
-        // Bonus for matching primary diagnosis
-        if (studentScores.primary === expertScores.primary) {
-            accuracy = Math.min(100, accuracy + 10);
-        }
-        
-        return Math.round(accuracy);
-    };
-
-    const determineSkillLevel = (accuracy) => {
-        if (accuracy >= 85) return 'Proficient';
-        if (accuracy >= 70) return 'Developing';
-        return 'Novice';
-    };
-
-    // Enhanced Storage Management for Multiple Completions
-    const loadProgressData = () => {
-        const saved = localStorage.getItem('module2ProgressEnhanced');
-        if (saved) {
-            return JSON.parse(saved);
-        }
-        return {
-            completions: [], // Array of completed sessions
-            currentSession: null // In-progress session
+        // Utility Functions
+        const generateSessionId = () => {
+            const date = new Date();
+            const dateStr = date.toISOString().slice(0,10).replace(/-/g, '');
+            const timeStr = date.toTimeString().slice(0,5).replace(/:/g, '');
+            const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+            return `M2-${dateStr}-${timeStr}-${random}`;
         };
-    };
 
-    const saveProgressData = (data) => {
-        localStorage.setItem('module2ProgressEnhanced', JSON.stringify(data));
-    };
+        const calculateAccuracy = (studentScores, expertScores) => {
+            const capacityDiff = Math.abs(studentScores.capacity - expertScores.capacity);
+            const capabilityDiff = Math.abs(studentScores.capability - expertScores.capability);
+            const constructorDiff = Math.abs(studentScores.constructor - expertScores.constructor);
+            const metaConstructorDiff = Math.abs(studentScores.metaConstructor - expertScores.metaConstructor);
+            
+            const avgDiff = (capacityDiff + capabilityDiff + constructorDiff + metaConstructorDiff) / 4;
+            let accuracy = Math.max(0, 100 - avgDiff);
+            
+            // Bonus for matching primary diagnosis
+            if (studentScores.primary === expertScores.primary) {
+                accuracy = Math.min(100, accuracy + 10);
+            }
+            
+            return Math.round(accuracy);
+        };
 
-    const clearAllProgress = () => {
-        // NOTE: Replaced confirm() as it is not supported in many sandboxed environments.
-        console.warn("Bypassing confirm() dialog for clearAllProgress.");
-        localStorage.removeItem('module2ProgressEnhanced');
-        window.location.reload();
-    };
+        const determineSkillLevel = (accuracy) => {
+            if (accuracy >= 85) return 'Proficient';
+            if (accuracy >= 70) return 'Developing';
+            return 'Novice';
+        };
+
+        // Enhanced Storage Management for Multiple Completions
+        const loadProgressData = () => {
+            const saved = localStorage.getItem('module2ProgressEnhanced');
+            if (saved) {
+                return JSON.parse(saved);
+            }
+            return {
+                completions: [], // Array of completed sessions
+                currentSession: null // In-progress session
+            };
+        };
+
+        const saveProgressData = (data) => {
+            localStorage.setItem('module2ProgressEnhanced', JSON.stringify(data));
+        };
+
+        const clearAllProgress = () => {
+            if (confirm('This will delete ALL your saved work and completions. Are you sure?')) {
+                localStorage.removeItem('module2ProgressEnhanced');
+                window.location.reload();
+            }
+        };
 
 
-    // Expert Diagnoses Data
-    const EXPERT_DIAGNOSES = {
-        case1: {
-            capacity: 85,
-            capability: 15,
-            constructor: 30,
-            metaConstructor: 20,
-            primary: 'capacity',
-            explanation: 'This is primarily a capacity suppression problem. The nurses clearly have the capacity for compassion (they entered the field because of it and show empathy with family), but chronic stress, impossible workloads, and constant exposure to suffering are preventing expression of this capacity. The biological substrates are being degraded by chronic stress (Sapolsky). This is NOT a capability gap - they know how to be compassionate. It\'s that the context is overwhelming their ability to express it.',
-            commonMistake: 'Students often misdiagnose this as a capability gap (need more training in compassion). But notice they USED to perform well and still show compassion outside work - that indicates capacity exists but is suppressed by context.'
-        },
-        case2: {
-            capacity: 20,
-            capability: 80,
-            constructor: 30,
-            metaConstructor: 15,
-            primary: 'capability',
-            explanation: 'This is a capability gap problem. People have the capacity for ethical reasoning and want to do the right thing, but lack reliable protocols and procedures for actually implementing ethics in their specific roles. Teaching abstract principles doesn\'t help because the problem isn\'t values - it\'s the absence of clear, practiced, reliable methods for ethical action in context. They need capability development: clear specifications, practiced procedures, and reliable patterns of coordination.',
-            commonMistake: 'Students sometimes think this is a constructor problem (need to institutionalize). But you can\'t institutionalize what doesn\'t exist yet - first you need to develop the capabilities, THEN institutionalize them.'
-        },
-        case3: {
-            capacity: 25,
-            capability: 40,
-            constructor: 85,
-            metaConstructor: 20,
-            primary: 'constructor',
-            explanation: 'This is a constructor failure. The ethical practices were working but depended entirely on the founder\'s personal presence rather than being institutionalized in structures, rituals, and norms that persist across personnel changes. When the founder left, the knowledge and practices left too. This shows the patterns were never properly built into persistent constructors - they were capability-level (worked when the founder used them) but never became constructor-level (work automatically and persist).',
-            commonMistake: 'Students might think this is capacity suppression (people lost motivation). But the issue is that practices weren\'t institutionalized - they need to rebuild constructors that don\'t depend on any individual.'
-        },
-        case4: {
-            capacity: 30,
-            capability: 35,
-            constructor: 40,
-            metaConstructor: 85,
-            primary: 'metaConstructor',
-            explanation: 'This is a meta-constructor absence problem. The policy is causing clear harm but there\'s no mechanism to examine, challenge, or revise it. The system cannot learn from mistakes or adapt to new information. This is the absence of meta-constructor capacity at the institutional level - no review mechanisms, no sunset clauses, no safe channels for challenge, no learning loops. The system is locked in and cannot improve itself.',
-            commonMistake: 'Students might focus on the bad policy content (a capability problem). But the deeper issue is that there\'s no way to FIX bad policies when discovered - that\'s the meta-constructor problem.'
-        },
-        case5: {
-            capacity: 70,
-            capability: 60,
-            constructor: 40,
-            metaConstructor: 30,
-            primary: 'capacity',
-            explanation: 'This is a multi-level problem requiring integrated intervention. PRIMARY: Capacity suppression - students are chronically stressed, sleep-deprived, and overloaded, which degrades their ability to learn and make good decisions. SECONDARY: Capability gap - many lack effective study skills and time management. TERTIARY: Constructor failure - a culture of cheating has normalized unethical behavior. Must address all levels, but start with capacity (reduce stressors, provide support) while simultaneously building capabilities and changing culture.',
-            commonMistake: 'Students often jump to "it\'s the culture" (constructor) and miss that stressed, desperate students with poor study skills are being pushed toward cheating by impossible circumstances. Must address context first.'
-        },
-        case6: {
-            capacity: 50,
-            capability: 55,
-            constructor: 65,
-            metaConstructor: 45,
-            primary: 'various',
-            explanation: 'This ambiguous case has multiple reasonable interpretations. Is the family\'s capacity being suppressed by their beliefs, or do they have different but equally valid values? Is this a capability gap (they don\'t understand medical facts) or a genuine value difference? Reasonable people can disagree. Key insight: Sometimes diagnostic uncertainty means we need MORE INFORMATION before intervening. Humility about our ability to diagnose others\' capacity, especially across cultural/religious differences, is essential. Whatever your diagnosis, you must defend it with evidence and acknowledge uncertainty.',
-            commonMistake: 'Rushing to judgment without acknowledging legitimate ambiguity and the need for more information, especially in cross-cultural contexts.'
-        }
-    };
+        // Expert Diagnoses Data
+        const EXPERT_DIAGNOSES = {
+            case1: {
+                capacity: 85,
+                capability: 15,
+                constructor: 30,
+                metaConstructor: 20,
+                primary: 'capacity',
+                explanation: 'This is primarily a capacity suppression problem. The nurses clearly have the capacity for compassion (they entered the field because of it and show empathy with family), but chronic stress, impossible workloads, and constant exposure to suffering are preventing expression of this capacity. The biological substrates are being degraded by chronic stress (Sapolsky). This is NOT a capability gap - they know how to be compassionate. It\'s that the context is overwhelming their ability to express it.',
+                commonMistake: 'Students often misdiagnose this as a capability gap (need more training in compassion). But notice they USED to perform well and still show compassion outside work - that indicates capacity exists but is suppressed by context.'
+            },
+            case2: {
+                capacity: 20,
+                capability: 80,
+                constructor: 30,
+                metaConstructor: 15,
+                primary: 'capability',
+                explanation: 'This is a capability gap problem. People have the capacity for ethical reasoning and want to do the right thing, but lack reliable protocols and procedures for actually implementing ethics in their specific roles. Teaching abstract principles doesn\'t help because the problem isn\'t values - it\'s the absence of clear, practiced, reliable methods for ethical action in context. They need capability development: clear specifications, practiced procedures, and reliable patterns of coordination.',
+                commonMistake: 'Students sometimes think this is a constructor problem (need to institutionalize). But you can\'t institutionalize what doesn\'t exist yet - first you need to develop the capabilities, THEN institutionalize them.'
+            },
+            case3: {
+                capacity: 25,
+                capability: 40,
+                constructor: 85,
+                metaConstructor: 20,
+                primary: 'constructor',
+                explanation: 'This is a constructor failure. The ethical practices were working but depended entirely on the founder\'s personal presence rather than being institutionalized in structures, rituals, and norms that persist across personnel changes. When the founder left, the knowledge and practices left too. This shows the patterns were never properly built into persistent constructors - they were capability-level (worked when the founder used them) but never became constructor-level (work automatically and persist).',
+                commonMistake: 'Students might think this is capacity suppression (people lost motivation). But the issue is that practices weren\'t institutionalized - they need to rebuild constructors that don\'t depend on any individual.'
+            },
+            case4: {
+                capacity: 30,
+                capability: 35,
+                constructor: 40,
+                metaConstructor: 85,
+                primary: 'metaConstructor',
+                explanation: 'This is a meta-constructor absence problem. The policy is causing clear harm but there\'s no mechanism to examine, challenge, or revise it. The system cannot learn from mistakes or adapt to new information. This is the absence of meta-constructor capacity at the institutional level - no review mechanisms, no sunset clauses, no safe channels for challenge, no learning loops. The system is locked in and cannot improve itself.',
+                commonMistake: 'Students might focus on the bad policy content (a capability problem). But the deeper issue is that there\'s no way to FIX bad policies when discovered - that\'s the meta-constructor problem.'
+            },
+            case5: {
+                capacity: 70,
+                capability: 60,
+                constructor: 40,
+                metaConstructor: 30,
+                primary: 'capacity',
+                explanation: 'This is a multi-level problem requiring integrated intervention. PRIMARY: Capacity suppression - students are chronically stressed, sleep-deprived, and overloaded, which degrades their ability to learn and make good decisions. SECONDARY: Capability gap - many lack effective study skills and time management. TERTIARY: Constructor failure - a culture of cheating has normalized unethical behavior. Must address all levels, but start with capacity (reduce stressors, provide support) while simultaneously building capabilities and changing culture.',
+                commonMistake: 'Students often jump to "it\'s the culture" (constructor) and miss that stressed, desperate students with poor study skills are being pushed toward cheating by impossible circumstances. Must address context first.'
+            },
+            case6: {
+                capacity: 50,
+                capability: 55,
+                constructor: 65,
+                metaConstructor: 45,
+                primary: 'various',
+                explanation: 'This ambiguous case has multiple reasonable interpretations. Is the family\'s capacity being suppressed by their beliefs, or do they have different but equally valid values? Is this a capability gap (they don\'t understand medical facts) or a genuine value difference? Reasonable people can disagree. Key insight: Sometimes diagnostic uncertainty means we need MORE INFORMATION before intervening. Humility about our ability to diagnose others\' capacity, especially across cultural/religious differences, is essential. Whatever your diagnosis, you must defend it with evidence and acknowledge uncertainty.',
+                commonMistake: 'Rushing to judgment without acknowledging legitimate ambiguity and the need for more information, especially in cross-cultural contexts.'
+            }
+        };
 
-    // Cases Data
-    const CASES = [
-        {
-            id: 'case1',
-            title: 'The Burned-Out Nurses',
-            difficulty: 1,
-            domain: 'Healthcare',
-            scenario: `St. Mary's Hospital has been experiencing a troubling pattern over the past 18 months. Nurses who were once known for their compassionate care are increasingly showing signs of emotional detachment. Patients complain about curt responses and lack of empathy. Family members report nurses seeming "checked out" or irritable.
+        // Cases Data
+        const CASES = [
+            {
+                id: 'case1',
+                title: 'The Burned-Out Nurses',
+                difficulty: 1,
+                domain: 'Healthcare',
+                scenario: `St. Mary's Hospital has been experiencing a troubling pattern over the past 18 months. Nurses who were once known for their compassionate care are increasingly showing signs of emotional detachment. Patients complain about curt responses and lack of empathy. Family members report nurses seeming "checked out" or irritable.
 
 However, when you look at individual nurses' backgrounds, they all entered healthcare because of genuine compassion. They volunteer in their communities. They show deep empathy with their own families. Some were voted "most compassionate" just a few years ago.
 
 The context: The hospital has been chronically understaffed due to budget cuts. Nurses regularly work 12-14 hour shifts with minimal breaks. They're required to care for 8-10 patients each when best practice recommends 4-5. Many report having no time to properly care for patients - having to rush through basic needs. Moral injury is common: knowing what patients need but being unable to provide it. Staff meetings have been cancelled. There's constant exposure to suffering and death without time for processing.`,
-            stakeholders: 'Nurses (burned out), Patients (receiving substandard care), Hospital administrators (budget constraints), Families (concerned)',
-            context: 'Chronic understaffing, impossible workloads, budget cuts, no processing time, moral injury',
-            problem: 'Previously compassionate nurses showing reduced empathy and care quality',
-            question: 'What level is the primary problem, and what type of intervention is needed?'
-        },
-        {
-            id: 'case2',
-            title: 'The Ethics Training Failure',
-            difficulty: 1,
-            domain: 'Business',
-            scenario: `TechCorp brought in expensive ethics consultants to address concerning behavior: favoritism in promotions, inconsistent standards, occasional harassment going unaddressed. The consultants provided comprehensive training on ethical principles, values, and moral philosophy. Everyone completed the training. Exit surveys showed people found it "inspiring" and felt motivated to "do better."
+                stakeholders: 'Nurses (burned out), Patients (receiving substandard care), Hospital administrators (budget constraints), Families (concerned)',
+                context: 'Chronic understaffing, impossible workloads, budget cuts, no processing time, moral injury',
+                problem: 'Previously compassionate nurses showing reduced empathy and care quality',
+                question: 'What level is the primary problem, and what type of intervention is needed?'
+            },
+            {
+                id: 'case2',
+                title: 'The Ethics Training Failure',
+                difficulty: 1,
+                domain: 'Business',
+                scenario: `TechCorp brought in expensive ethics consultants to address concerning behavior: favoritism in promotions, inconsistent standards, occasional harassment going unaddressed. The consultants provided comprehensive training on ethical principles, values, and moral philosophy. Everyone completed the training. Exit surveys showed people found it "inspiring" and felt motivated to "do better."
 
 Three months later, nothing has changed. The same problems persist. When you interview employees, they say things like: "I want to be fair, but how do I actually decide between candidates when both are qualified?" "I know harassment is wrong, but what specifically do I say when I witness it?" "The values are great but there's no clear process for applying them."
 
 The context: TechCorp has vague policies that say things like "be ethical" and "treat people fairly" but no clear protocols for specific situations. There's no standardized interview process, no clear guidelines for addressing harassment, no consistent performance evaluation criteria. Managers are left to "use their judgment" with no training in how to implement that judgment reliably.`,
-            stakeholders: 'Employees (want to do right but unsure how), Managers (lack clear protocols), Ethics consultants (taught principles, not practices)',
-            context: 'Vague policies, no clear protocols, no standardized processes, "use your judgment" without guidance',
-            problem: 'Ethics training doesn\'t translate to behavior change',
-            question: 'Why didn\'t the ethics training work, and what\'s actually needed?'
-        },
-        {
-            id: 'case3',
-            title: 'When the Founder Leaves',
-            difficulty: 1,
-            domain: 'Organizational',
-            scenario: `GreenFuture, a sustainable business consultancy, was founded by Maya Chen, a charismatic leader deeply committed to both environmental and social ethics. Under her leadership, the company had an outstanding reputation. They turned down lucrative contracts if clients wouldn't commit to genuine sustainability. Employees felt empowered to raise ethical concerns. Regular meetings addressed dilemmas thoughtfully.
+                stakeholders: 'Employees (want to do right but unsure how), Managers (lack clear protocols), Ethics consultants (taught principles, not practices)',
+                context: 'Vague policies, no clear protocols, no standardized processes, "use your judgment" without guidance',
+                problem: 'Ethics training doesn\'t translate to behavior change',
+                question: 'Why didn\'t the ethics training work, and what\'s actually needed?'
+            },
+            {
+                id: 'case3',
+                title: 'When the Founder Leaves',
+                difficulty: 1,
+                domain: 'Organizational',
+                scenario: `GreenFuture, a sustainable business consultancy, was founded by Maya Chen, a charismatic leader deeply committed to both environmental and social ethics. Under her leadership, the company had an outstanding reputation. They turned down lucrative contracts if clients wouldn't commit to genuine sustainability. Employees felt empowered to raise ethical concerns. Regular meetings addressed dilemmas thoughtfully.
 
 Maya was the person everyone went to with questions. She personally modeled ethical decision-making. She told stories that conveyed the company's values. She made final calls on difficult trade-offs. When she announced her retirement, everyone was nervous but assumed her deputy would maintain the culture.
 
 Within six months of Maya's departure, things fell apart. The deputy didn't have Maya's moral clarity. Without her stories and personal example, people lost confidence in their own judgment. The regular ethics meetings stopped (Maya had organized them). Employees started taking contracts they wouldn't have before. Several top performers left, saying "it's not the same company."
 
 The context: All of GreenFuture's ethical practices lived in Maya's head and personal habits. Nothing was written down. There were no institutionalized procedures. No training program. No documented decision-making frameworks. Everything depended on Maya being there.`,
-            stakeholders: 'Maya (retired founder), Deputy (can\'t replicate Maya), Employees (lost without founder), Clients (noticing changes)',
-            context: 'Everything depended on founder, no documentation, no institutionalized practices, no training program',
-            problem: 'Ethical practices collapsed when founder left',
-            question: 'What was the structural problem, and what should have been done differently?'
-        },
-        {
-            id: 'case4',
-            title: 'The Unchangeable Policy',
-            difficulty: 1,
-            domain: 'Policy',
-            scenario: `The Department of Education implemented a "zero tolerance" policy for student discipline 15 years ago. Any student who gets in a physical altercation is automatically suspended for 10 days, no exceptions. At the time, this seemed to address concerns about inconsistent discipline and favoritism.
+                stakeholders: 'Maya (retired founder), Deputy (can\'t replicate Maya), Employees (lost without founder), Clients (noticing changes)',
+                context: 'Everything depended on founder, no documentation, no institutionalized practices, no training program',
+                problem: 'Ethical practices collapsed when founder left',
+                question: 'What was the structural problem, and what should have been done differently?'
+            },
+            {
+                id: 'case4',
+                title: 'The Unchangeable Policy',
+                difficulty: 1,
+                domain: 'Policy',
+                scenario: `The Department of Education implemented a "zero tolerance" policy for student discipline 15 years ago. Any student who gets in a physical altercation is automatically suspended for 10 days, no exceptions. At the time, this seemed to address concerns about inconsistent discipline and favoritism.
 
 However, the policy has clearly caused harm. Students defending themselves from bullies are suspended equally with aggressors. Students with disabilities who have behavior episodes are suspended at high rates. Victims of assault who push their attacker away are punished the same as the attacker. Research shows these suspensions don't improve safety and significantly harm suspended students' academic outcomes.
 
 Teachers, principals, and even school board members acknowledge the policy is causing harm. Everyone knows it should be revised to allow for context, self-defense, and disability accommodations. But the policy is locked in. It would require state legislative action to change, and no legislator wants to be seen as "soft on discipline." There's no built-in review process. No sunset clause. No mechanism for schools to request exemptions or modifications. The department has no authority to revise it even when presented with evidence of harm.
 
 The context: Policy is state law, requires legislature to change, political barriers to revision, no review mechanism, no sunset clause, no exemption process, no learning built in.`,
-            stakeholders: 'Students (being harmed), Teachers/Principals (hands tied), School board (no authority to change), Legislators (politically difficult), Parents (frustrated)',
-            context: 'State law, requires legislature, political barriers, no review process, no sunset clause, locked in',
-            problem: 'Clearly harmful policy cannot be examined or revised',
-            question: 'What systemic problem does this illustrate, and what structural changes would prevent it?'
-        },
-        {
-            id: 'case5',
-            title: 'The Cheating Epidemic',
-            difficulty: 2,
-            domain: 'Education',
-            scenario: `Riverside University has discovered widespread cheating. In a recent engineering exam, 40% of students were found to have used unauthorized materials. This follows patterns of cheating in other departments. When the honor code was introduced 10 years ago, violations were rare. Now they're endemic.
+                stakeholders: 'Students (being harmed), Teachers/Principals (hands tied), School board (no authority to change), Legislators (politically difficult), Parents (frustrated)',
+                context: 'State law, requires legislature, political barriers, no review process, no sunset clause, locked in',
+                problem: 'Clearly harmful policy cannot be examined or revised',
+                question: 'What systemic problem does this illustrate, and what structural changes would prevent it?'
+            },
+            {
+                id: 'case5',
+                title: 'The Cheating Epidemic',
+                difficulty: 2,
+                domain: 'Education',
+                scenario: `Riverside University has discovered widespread cheating. In a recent engineering exam, 40% of students were found to have used unauthorized materials. This follows patterns of cheating in other departments. When the honor code was introduced 10 years ago, violations were rare. Now they're endemic.
 
 Investigation reveals multiple factors: (1) Students are overwhelmed - taking 18+ credits, working 20+ hours/week to afford tuition, sleeping 4-5 hours/night. Many report feeling desperate and unable to keep up. (2) Many students never learned effective study skills - they're trying but don't know HOW to learn the material in the time available. High school didn't prepare them. (3) A culture of cheating has developed - "everyone does it," sharing test banks is normalized, and students who don't cheat feel like "suckers." (4) Class sizes have tripled while instructors decreased - students feel anonymous and have no relationship with professors.
 
 The context: Tuition increases forcing students to work more, class sizes increased, support services cut, high school preparation inadequate, culture of cheating normalized, sleep deprivation and stress endemic, weak study skills widespread.`,
-            stakeholders: 'Students (stressed, desperate, some lacking skills), Faculty (overwhelmed, disappointed), Administration (budget pressures), Parents (concerned)',
-            context: 'Multiple stressors, financial pressure, inadequate preparation, normalized cheating, large classes, minimal support',
-            problem: 'Widespread cheating in previously honest environment',
-            question: 'This is a multi-level problem. Identify all the levels involved and recommend an integrated intervention strategy.'
-        },
-        {
-            id: 'case6',
-            title: 'Cultural Conflict in Healthcare (Ambiguous Case)',
-            difficulty: 3,
-            domain: 'Healthcare',
-            scenario: `Dr. Sarah Johnson is treating 8-year-old Emma, who has a treatable but serious bacterial infection. Without antibiotics, Emma will likely suffer serious complications, possibly including permanent hearing loss or, in worst case, death. With antibiotics, full recovery is expected.
+                stakeholders: 'Students (stressed, desperate, some lacking skills), Faculty (overwhelmed, disappointed), Administration (budget pressures), Parents (concerned)',
+                context: 'Multiple stressors, financial pressure, inadequate preparation, normalized cheating, large classes, minimal support',
+                problem: 'Widespread cheating in previously honest environment',
+                question: 'This is a multi-level problem. Identify all the levels involved and recommend an integrated intervention strategy.'
+            },
+            {
+                id: 'case6',
+                title: 'Cultural Conflict in Healthcare (Ambiguous Case)',
+                difficulty: 3,
+                domain: 'Healthcare',
+                scenario: `Dr. Sarah Johnson is treating 8-year-old Emma, who has a treatable but serious bacterial infection. Without antibiotics, Emma will likely suffer serious complications, possibly including permanent hearing loss or, in worst case, death. With antibiotics, full recovery is expected.
 
 Emma's parents are devout members of a religious community that rejects modern medicine, relying instead on prayer and natural remedies. They are loving, educated parents who are deeply committed to Emma's wellbeing as they understand it. They believe that accepting medical treatment shows lack of faith in God and could harm Emma spiritually, which they see as far more important than physical health.
 
@@ -318,585 +318,672 @@ The parents explain their worldview articulately. They cite examples of communit
 Dr. Johnson believes Emma's physical wellbeing must be prioritized and is considering seeking a court order to treat against parental wishes. She worries that the parents' capacity for rational decision-making is being constrained by their religious indoctrination. But she also wonders: Is she being paternalistic? Are the parents demonstrating different but valid values? Does medical authority override religious freedom?
 
 The context: Religious beliefs vs. medical judgment, child cannot consent, serious harm likely without treatment, loving but religiously committed parents, questions of capacity vs. values, cultural/religious difference.`,
-            stakeholders: 'Emma (child at risk), Parents (religious commitment), Dr. Johnson (medical responsibility), Religious community, Legal system',
-            context: 'Religious beliefs, medical necessity, parental rights, child welfare, cultural difference, capacity vs. values questions',
-            problem: 'Conflict between religious freedom and child welfare',
-            question: 'This is deliberately ambiguous. How do you diagnose the levels involved? Is this capacity suppression, value difference, or something else? Defend your diagnosis while acknowledging uncertainty.'
-        }
-    ];
-
-    // Pattern Recognition Questions
-    const PATTERN_QUESTIONS = [
-        {
-            id: 'pr1',
-            scenario: 'A teacher who has always been excellent suddenly starts arriving late and seems disengaged. Investigation reveals a new policy requiring 3 hours of daily administrative paperwork, leaving no time for lesson planning.',
-            correctAnswer: 'capacity',
-            explanation: 'This is capacity suppression. The teacher has demonstrated capacity (past excellence) but new stressors (excessive bureaucracy) are preventing its expression.'
-        },
-        {
-            id: 'pr2',
-            scenario: 'A hospital has a great ethics policy written by the former director. After she left, no one follows it because no one else knows how to implement it in practice.',
-            correctAnswer: 'constructor',
-            explanation: 'This is constructor failure. The policy existed but wasn\'t institutionalized - it depended on one person rather than being built into persistent structures.'
-        },
-        {
-            id: 'pr3',
-            scenario: 'Employees want to be inclusive but don\'t know how to run meetings that accommodate different communication styles. They need specific techniques.',
-            correctAnswer: 'capability',
-            explanation: 'This is a capability gap. They have the capacity (desire to be inclusive) but lack reliable methods and practiced techniques for achieving it.'
-        },
-        {
-            id: 'pr4',
-            scenario: 'A company discovers its AI hiring system is biased. There\'s no process to audit it, no mechanism to receive complaints about it, and no authority to revise it without executive approval (which takes months).',
-            correctAnswer: 'metaConstructor',
-            explanation: 'This is meta-constructor absence. The system cannot examine or improve itself - no audit mechanisms, feedback loops, or revision authority.'
-        },
-        {
-            id: 'pr5',
-            scenario: 'A prison guard who has shown compassion for decades becomes increasingly harsh after being assaulted by an inmate. She now sees all inmates as threats.',
-            correctAnswer: 'capacity',
-            explanation: 'This is capacity suppression. The trauma (assault) has activated threat-detection systems that now override her capacity for compassion. The capacity existed before and could return with support.'
-        },
-        {
-            id: 'pr6',
-            scenario: 'A university has a peer review process that catches problems before they escalate. When leadership changes and the new dean eliminates it to save money, small issues grow into major scandals.',
-            correctAnswer: 'metaConstructor',
-            explanation: 'This is meta-constructor capacity. The peer review was a learning mechanism - it allowed the system to catch and correct problems. Removing it eliminated the ability to self-improve.'
-        },
-        {
-            id: 'pr7',
-            scenario: 'Nurses know the importance of hand hygiene but forget to wash hands consistently during busy shifts. They need a systematic protocol that works under pressure.',
-            correctAnswer: 'capability',
-            explanation: 'This is capability gap. They have capacity (knowledge) but lack reliable performance under real conditions. Need capability development - practiced procedures that work in context.'
-        },
-        {
-            id: 'pr8',
-            scenario: 'A nonprofit\'s conflict resolution practices work great when the founder mediates, but fall apart when anyone else tries. The practices aren\'t documented or trained.',
-            correctAnswer: 'constructor',
-            explanation: 'Constructor failure. Practices exist at capability level (work when founder does them) but haven\'t been institutionalized into persistent structures independent of individuals.'
-        },
-        {
-            id: 'pr9',
-            scenario: 'A city discovers its zoning laws from the 1950s now segregate communities and restrict affordable housing, but they\'re enshrined in the city charter with no amendment process.',
-            correctAnswer: 'metaConstructor',
-            explanation: 'Meta-constructor absence. The system is locked and cannot learn from its mistakes or adapt to new understanding - no revision mechanisms.'
-        },
-        {
-            id: 'pr10',
-            scenario: 'Customer service representatives used to be empathetic but have become robotic after the company installed monitoring software that penalizes any call over 3 minutes.',
-            correctAnswer: 'capacity',
-            explanation: 'Capacity suppression. The monitoring creates stress and removes autonomy, suppressing their existing capacity for empathy. They CAN be empathetic (did before) but context prevents it.'
-        }
-    ];
-
-    // Navigation Menu Component
-    function NavigationMenu({ stage, progressData, onAction }) {
-        const [isOpen, setIsOpen] = useState(false);
-        const hasCompletions = progressData.completions && progressData.completions.length > 0;
-        const hasCurrentSession = progressData.currentSession !== null;
-
-        return (
-            <div className="nav-menu">
-                <button
-                    onClick={() => setIsOpen(!isOpen)}
-                    className="bg-white hover:bg-gray-50 text-gray-700 p-3 rounded-lg shadow-lg transition-colors"
-                    title="Menu"
-                >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
-
-                {isOpen && (
-                    <div className="menu-dropdown bg-white rounded-lg shadow-2xl border border-gray-200">
-                        <div className="p-4 border-b border-gray-200">
-                            <h3 className="font-bold text-gray-900">Menu</h3>
-                        </div>
-                        
-                        <div className="p-2">
-                            {hasCompletions && (
-                                <button
-                                    onClick={() => { onAction('viewCompletions'); setIsOpen(false); }}
-                                    className="w-full text-left px-4 py-3 hover:bg-purple-50 rounded flex items-center space-x-2 text-gray-700"
-                                >
-                                    <span>📋</span>
-                                    <span>Review Completed Work</span>
-                                    <span className="ml-auto bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full">
-                                        {progressData.completions.length}
-                                    </span>
-                                </button>
-                            )}
-
-                            {stage !== 'welcome' && stage !== 'review' && stage !== 'viewCompletions' && (
-                                <button
-                                    onClick={() => { 
-                                        // NOTE: Bypassing confirm() dialog
-                                        console.warn("Bypassing confirm() dialog for startNew.");
-                                        onAction('startNew'); 
-                                        setIsOpen(false);
-                                    }}
-                                    className="w-full text-left px-4 py-3 hover:bg-blue-50 rounded flex items-center space-x-2 text-gray-700"
-                                >
-                                    <span>🔄</span>
-                                    <span>Start New Session</span>
-                                </button>
-                            )}
-
-                            {(hasCompletions || hasCurrentSession) && (
-                                <button
-                                    onClick={() => { clearAllProgress(); setIsOpen(false); }}
-                                    className="w-full text-left px-4 py-3 hover:bg-red-50 rounded flex items-center space-x-2 text-red-600"
-                                >
-                                    <span>🗑️</span>
-                                    <span>Clear All Data</span>
-                                </button>
-                            )}
-
-                            <div className="border-t border-gray-200 my-2"></div>
-
-                            <button
-                                onClick={() => setIsOpen(false)}
-                                className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded flex items-center space-x-2 text-gray-500"
-                            >
-                                <span>✕</span>
-                                <span>Close Menu</span>
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </div>
-        );
-    }
-
-    // Welcome Screen Component (ENHANCED)
-    function WelcomeScreen({ onStart, onContinue, progressData, onReview }) {
-        const [formData, setFormData] = useState({ name: '', email: '', course: '' });
-        const hasCurrentSession = progressData.currentSession !== null;
-        const hasCompletions = progressData.completions && progressData.completions.length > 0;
-
-        const handleSubmit = (e) => {
-            e.preventDefault();
-            if (formData.name && formData.email && formData.course) {
-                onStart(formData);
+                stakeholders: 'Emma (child at risk), Parents (religious commitment), Dr. Johnson (medical responsibility), Religious community, Legal system',
+                context: 'Religious beliefs, medical necessity, parental rights, child welfare, cultural difference, capacity vs. values questions',
+                problem: 'Conflict between religious freedom and child welfare',
+                question: 'This is deliberately ambiguous. How do you diagnose the levels involved? Is this capacity suppression, value difference, or something else? Defend your diagnosis while acknowledging uncertainty.'
             }
-        };
+        ];
 
-        return (
-            <div className="fade-in max-w-2xl mx-auto space-y-6">
-                {/* Show saved progress if exists */}
-                {(hasCurrentSession || hasCompletions) && (
-                    <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
-                        <h3 className="text-xl font-bold text-blue-900 mb-4">📂 Saved Progress Found</h3>
+        // Pattern Recognition Questions
+        const PATTERN_QUESTIONS = [
+            {
+                id: 'pr1',
+                scenario: 'A teacher who has always been excellent suddenly starts arriving late and seems disengaged. Investigation reveals a new policy requiring 3 hours of daily administrative paperwork, leaving no time for lesson planning.',
+                correctAnswer: 'capacity',
+                explanation: 'This is capacity suppression. The teacher has demonstrated capacity (past excellence) but new stressors (excessive bureaucracy) are preventing its expression.'
+            },
+            {
+                id: 'pr2',
+                scenario: 'A hospital has a great ethics policy written by the former director. After she left, no one follows it because no one else knows how to implement it in practice.',
+                correctAnswer: 'constructor',
+                explanation: 'This is constructor failure. The policy existed but wasn\'t institutionalized - it depended on one person rather than being built into persistent structures.'
+            },
+            {
+                id: 'pr3',
+                scenario: 'Employees want to be inclusive but don\'t know how to run meetings that accommodate different communication styles. They need specific techniques.',
+                correctAnswer: 'capability',
+                explanation: 'This is a capability gap. They have the capacity (desire to be inclusive) but lack reliable methods and practiced techniques for achieving it.'
+            },
+            {
+                id: 'pr4',
+                scenario: 'A company discovers its AI hiring system is biased. There\'s no process to audit it, no mechanism to receive complaints about it, and no authority to revise it without executive approval (which takes months).',
+                correctAnswer: 'metaConstructor',
+                explanation: 'This is meta-constructor absence. The system cannot examine or improve itself - no audit mechanisms, feedback loops, or revision authority.'
+            },
+            {
+                id: 'pr5',
+                scenario: 'A prison guard who has shown compassion for decades becomes increasingly harsh after being assaulted by an inmate. She now sees all inmates as threats.',
+                correctAnswer: 'capacity',
+                explanation: 'This is capacity suppression. The trauma (assault) has activated threat-detection systems that now override her capacity for compassion. The capacity existed before and could return with support.'
+            },
+            {
+                id: 'pr6',
+                scenario: 'A university has a peer review process that catches problems before they escalate. When leadership changes and the new dean eliminates it to save money, small issues grow into major scandals.',
+                correctAnswer: 'metaConstructor',
+                explanation: 'This is meta-constructor capacity. The peer review was a learning mechanism - it allowed the system to catch and correct problems. Removing it eliminated the ability to self-improve.'
+            },
+            {
+                id: 'pr7',
+                scenario: 'Nurses know the importance of hand hygiene but forget to wash hands consistently during busy shifts. They need a systematic protocol that works under pressure.',
+                correctAnswer: 'capability',
+                explanation: 'This is capability gap. They have capacity (knowledge) but lack reliable performance under real conditions. Need capability development - practiced procedures that work in context.'
+            },
+            {
+                id: 'pr8',
+                scenario: 'A nonprofit\'s conflict resolution practices work great when the founder mediates, but fall apart when anyone else tries. The practices aren\'t documented or trained.',
+                correctAnswer: 'constructor',
+                explanation: 'Constructor failure. Practices exist at capability level (work when founder does them) but haven\'t been institutionalized into persistent structures independent of individuals.'
+            },
+            {
+                id: 'pr9',
+                scenario: 'A city discovers its zoning laws from the 1950s now segregate communities and restrict affordable housing, but they\'re enshrined in the city charter with no amendment process.',
+                correctAnswer: 'metaConstructor',
+                explanation: 'Meta-constructor absence. The system is locked and cannot learn from its mistakes or adapt to new understanding - no revision mechanisms.'
+            },
+            {
+                id: 'pr10',
+                scenario: 'Customer service representatives used to be empathetic but have become robotic after the company installed monitoring software that penalizes any call over 3 minutes.',
+                correctAnswer: 'capacity',
+                explanation: 'Capacity suppression. The monitoring creates stress and removes autonomy, suppressing their existing capacity for empathy. They CAN be empathetic (did before) but context prevents it.'
+            }
+        ];
+
+        // Main App Component
+
+        // Navigation Menu Component
+        function NavigationMenu({ stage, progressData, onAction }) {
+            const [isOpen, setIsOpen] = useState(false);
+            const hasCompletions = progressData.completions && progressData.completions.length > 0;
+            const hasCurrentSession = progressData.currentSession !== null;
+
+            return (
+                <div className="nav-menu">
+                    <button
+                        onClick={() => setIsOpen(!isOpen)}
+                        className="bg-white hover:bg-gray-50 text-gray-700 p-3 rounded-lg shadow-lg transition-colors"
+                        title="Menu"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+
+                    {isOpen && (
+                        <div className="menu-dropdown bg-white rounded-lg shadow-2xl border border-gray-200">
+                            <div className="p-4 border-b border-gray-200">
+                                <h3 className="font-bold text-gray-900">Menu</h3>
+                            </div>
+                            
+                            <div className="p-2">
+                                {hasCompletions && (
+                                    <button
+                                        onClick={() => { onAction('viewCompletions'); setIsOpen(false); }}
+                                        className="w-full text-left px-4 py-3 hover:bg-purple-50 rounded flex items-center space-x-2 text-gray-700"
+                                    >
+                                        <span>📋</span>
+                                        <span>Review Completed Work</span>
+                                        <span className="ml-auto bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full">
+                                            {progressData.completions.length}
+                                        </span>
+                                    </button>
+                                )}
+
+                                {stage !== 'welcome' && stage !== 'review' && stage !== 'viewCompletions' && (
+                                    <button
+                                        onClick={() => { 
+                                            if (confirm('Start a new session? Current progress will be saved.')) {
+                                                onAction('startNew'); 
+                                                setIsOpen(false);
+                                            }
+                                        }}
+                                        className="w-full text-left px-4 py-3 hover:bg-blue-50 rounded flex items-center space-x-2 text-gray-700"
+                                    >
+                                        <span>🔄</span>
+                                        <span>Start New Session</span>
+                                    </button>
+                                )}
+
+                                {(hasCompletions || hasCurrentSession) && (
+                                    <button
+                                        onClick={() => { clearAllProgress(); setIsOpen(false); }}
+                                        className="w-full text-left px-4 py-3 hover:bg-red-50 rounded flex items-center space-x-2 text-red-600"
+                                    >
+                                        <span>🗑️</span>
+                                        <span>Clear All Data</span>
+                                    </button>
+                                )}
+
+                                <div className="border-t border-gray-200 my-2"></div>
+
+                                <button
+                                    onClick={() => setIsOpen(false)}
+                                    className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded flex items-center space-x-2 text-gray-500"
+                                >
+                                    <span>✕</span>
+                                    <span>Close Menu</span>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function App() {
+            const [stage, setStage] = useState('welcome'); // welcome, tutorial, responsibility, cases, pattern, complete, review, viewCompletions
+            const [progressData, setProgressData] = useState(loadProgressData());
+            const [studentInfo, setStudentInfo] = useState({ name: '', email: '', course: '' });
+            const [currentCaseIndex, setCurrentCaseIndex] = useState(0);
+            const [reviewingCompletion, setReviewingCompletion] = useState(null);
+
+            // Save progress whenever it changes
+            useEffect(() => {
+                saveProgressData(progressData);
+            }, [progressData]);
+
+            const startNewSession = (info) => {
+                const sessionId = generateSessionId();
+                const newSession = {
+                    sessionId,
+                    studentInfo: info,
+                    startTime: new Date().toISOString(),
+                    completionTime: null,
+                    cases: [],
+                    patternRecognition: { answers: [], score: 0 }
+                };
+                
+                setStudentInfo(info);
+                setProgressData({
+                    ...progressData,
+                    currentSession: newSession
+                });
+                setStage('tutorial');
+            };
+
+            const continueSession = () => {
+                if (progressData.currentSession) {
+                    setStudentInfo(progressData.currentSession.studentInfo);
+                    // Determine where to continue
+                    if (progressData.currentSession.cases.length === 0) {
+                        setStage('tutorial');
+                    } else if (progressData.currentSession.cases.length < CASES.length) {
+                        setCurrentCaseIndex(progressData.currentSession.cases.length);
+                        setStage('cases');
+                    } else if (!progressData.currentSession.patternRecognition.answers.length) {
+                        setStage('pattern');
+                    } else {
+                        setStage('complete');
+                    }
+                }
+            };
+
+            const startCases = () => {
+                setStage('cases');
+                setCurrentCaseIndex(0);
+            };
+
+            const completeCaseWork = (caseData) => {
+                const updatedSession = {
+                    ...progressData.currentSession,
+                    cases: [...progressData.currentSession.cases, caseData]
+                };
+                
+                setProgressData({
+                    ...progressData,
+                    currentSession: updatedSession
+                });
+
+                if (currentCaseIndex < CASES.length - 1) {
+                    setCurrentCaseIndex(currentCaseIndex + 1);
+                } else {
+                    setStage('pattern');
+                }
+            };
+
+            const completePatternRecognition = (results) => {
+                const completedSession = {
+                    ...progressData.currentSession,
+                    patternRecognition: results,
+                    completionTime: new Date().toISOString()
+                };
+
+                // Move to completions array
+                setProgressData({
+                    completions: [...progressData.completions, completedSession],
+                    currentSession: null
+                });
+                
+                setStage('complete');
+            };
+
+            const handleMenuAction = (action) => {
+                switch(action) {
+                    case 'viewCompletions':
+                        setStage('viewCompletions');
+                        break;
+                    case 'startNew':
+                        setStage('welcome');
+                        setCurrentCaseIndex(0);
+                        break;
+                }
+            };
+
+            const reviewCompletion = (completion) => {
+                setReviewingCompletion(completion);
+                setStage('review');
+            };
+
+            return (
+                <div className="min-h-screen">
+                    <header className="gradient-bg text-white shadow-lg">
+                        <div className="max-w-5xl mx-auto px-4 py-6">
+                            <h1 className="text-3xl font-bold mb-2">Module 2: Diagnostic Practice</h1>
+                            <p className="text-lg opacity-90">Learn to diagnose ethical problems at the right level</p>
+                        </div>
+                    </header>
+
+                    <main className="max-w-5xl mx-auto px-4 py-8">
+                        {stage === 'welcome' && (
+                            <WelcomeScreen onStart={startModule} />
+                        )}
+                        {stage === 'tutorial' && (
+                            <TutorialScreen onComplete={() => setStage('responsibility')} />
+                        )}
+                        {stage === 'responsibility' && (
+                            <ResponsibilityScreen onComplete={startCases} />
+                        )}
+                        {stage === 'cases' && (
+                            <CaseWorkflow 
+                                caseData={CASES[currentCaseIndex]}
+                                caseNumber={currentCaseIndex + 1}
+                                totalCases={CASES.length}
+                                onComplete={completeCaseWork}
+                            />
+                        )}
+                        {stage === 'pattern' && (
+                            <PatternRecognitionGame 
+                                questions={PATTERN_QUESTIONS}
+                                onComplete={completePatternRecognition}
+                            />
+                        )}
+                        {stage === 'complete' && (
+                            <CompletionScreen 
+                                studentInfo={studentInfo}
+                                sessionData={sessionData}
+                            />
+                        )}
+                    </main>
+                </div>
+            );
+        }
+
+        // Welcome Screen Component (ENHANCED)
+        function WelcomeScreen({ onStart, onContinue, progressData, onReview }) {
+            const [formData, setFormData] = useState({ name: '', email: '', course: '' });
+            const hasCurrentSession = progressData.currentSession !== null;
+            const hasCompletions = progressData.completions && progressData.completions.length > 0;
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (formData.name && formData.email && formData.course) {
+                    onStart(formData);
+                }
+            };
+
+            return (
+                <div className="fade-in max-w-2xl mx-auto space-y-6">
+                    {/* Show saved progress if exists */}
+                    {(hasCurrentSession || hasCompletions) && (
+                        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6">
+                            <h3 className="text-xl font-bold text-blue-900 mb-4">📂 Saved Progress Found</h3>
+                            
+                            {hasCurrentSession && (
+                                <div className="bg-white p-4 rounded-lg mb-4">
+                                    <h4 className="font-semibold text-gray-900 mb-2">In-Progress Session</h4>
+                                    <p className="text-gray-700 mb-2">
+                                        {progressData.currentSession.studentInfo.name}
+                                    </p>
+                                    <p className="text-sm text-gray-600 mb-3">
+                                        Cases completed: {progressData.currentSession.cases.length}/{CASES.length}
+                                    </p>
+                                    <button
+                                        onClick={onContinue}
+                                        className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                                    >
+                                        Continue Where I Left Off →
+                                    </button>
+                                </div>
+                            )}
+
+                            {hasCompletions && (
+                                <div className="bg-white p-4 rounded-lg">
+                                    <h4 className="font-semibold text-gray-900 mb-2">Completed Sessions</h4>
+                                    <p className="text-gray-700 mb-3">
+                                        You have {progressData.completions.length} completed session{progressData.completions.length > 1 ? 's' : ''}
+                                    </p>
+                                    <button
+                                        onClick={onReview}
+                                        className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                                    >
+                                        Review Completed Work →
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+// Tutorial Screen Component
+        function TutorialScreen({ onComplete }) {
+            return (
+                <div className="fade-in max-w-3xl mx-auto">
+                    <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
+                        <h2 className="text-3xl font-bold text-gray-900 mb-6">The Diagnostic Framework</h2>
                         
-                        {hasCurrentSession && (
-                            <div className="bg-white p-4 rounded-lg mb-4">
-                                <h4 className="font-semibold text-gray-900 mb-2">In-Progress Session</h4>
+                        <div className="space-y-6">
+                            <div className="border-l-4 border-blue-500 pl-6 py-4 bg-blue-50">
+                                <h3 className="text-xl font-bold text-blue-900 mb-2">Level 1: Capacity</h3>
                                 <p className="text-gray-700 mb-2">
-                                    {progressData.currentSession.studentInfo.name}
+                                    <strong>Question:</strong> Is ethical capacity being suppressed by context?
                                 </p>
-                                <p className="text-sm text-gray-600 mb-3">
-                                    Cases completed: {progressData.currentSession.cases.length}/{CASES.length}
+                                <p className="text-gray-600 text-sm mb-2">
+                                    <strong>Look for:</strong> People who used to perform well, show capacity in other contexts, 
+                                    or are under chronic stress/constraint
                                 </p>
-                                <button
-                                    onClick={onContinue}
-                                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                                >
-                                    Continue Where I Left Off →
-                                </button>
+                                <p className="text-gray-600 text-sm">
+                                    <strong>Examples:</strong> Burned-out professionals, trauma survivors, people under threat, 
+                                    chronic stress, suppressed freedoms
+                                </p>
                             </div>
-                        )}
 
-                        {hasCompletions && (
-                            <div className="bg-white p-4 rounded-lg">
-                                <h4 className="font-semibold text-gray-900 mb-2">Completed Sessions</h4>
-                                <p className="text-gray-700 mb-3">
-                                    You have {progressData.completions.length} completed session{progressData.completions.length > 1 ? 's' : ''}
+                            <div className="border-l-4 border-green-500 pl-6 py-4 bg-green-50">
+                                <h3 className="text-xl font-bold text-green-900 mb-2">Level 2: Capability</h3>
+                                <p className="text-gray-700 mb-2">
+                                    <strong>Question:</strong> Do people lack reliable methods for ethical coordination?
                                 </p>
-                                <button
-                                    onClick={onReview}
-                                    className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
-                                >
-                                    Review Completed Work →
-                                </button>
+                                <p className="text-gray-600 text-sm mb-2">
+                                    <strong>Look for:</strong> Good intentions but inconsistent performance, vague policies, 
+                                    "use your judgment" without training, no clear protocols
+                                </p>
+                                <p className="text-gray-600 text-sm">
+                                    <strong>Examples:</strong> Ethics training that doesn't translate to action, unclear procedures, 
+                                    lack of practiced skills, no standardized methods
+                                </p>
                             </div>
-                        )}
+
+                            <div className="border-l-4 border-purple-500 pl-6 py-4 bg-purple-50">
+                                <h3 className="text-xl font-bold text-purple-900 mb-2">Level 3: Constructor</h3>
+                                <p className="text-gray-700 mb-2">
+                                    <strong>Question:</strong> Do ethical patterns persist or depend on specific people?
+                                </p>
+                                <p className="text-gray-600 text-sm mb-2">
+                                    <strong>Look for:</strong> Things that work when certain people are present but fail when they leave, 
+                                    lack of institutionalization, no documentation or training
+                                </p>
+                                <p className="text-gray-600 text-sm">
+                                    <strong>Examples:</strong> Charismatic founder syndrome, undocumented practices, 
+                                    culture that doesn't persist, knowledge in individuals' heads
+                                </p>
+                            </div>
+
+                            <div className="border-l-4 border-red-500 pl-6 py-4 bg-red-50">
+                                <h3 className="text-xl font-bold text-red-900 mb-2">Level 4: Meta-Constructor</h3>
+                                <p className="text-gray-700 mb-2">
+                                    <strong>Question:</strong> Can the system examine and improve itself?
+                                </p>
+                                <p className="text-gray-600 text-sm mb-2">
+                                    <strong>Look for:</strong> No review mechanisms, can't learn from mistakes, locked-in policies, 
+                                    no safe channels for challenge, no revision authority
+                                </p>
+                                <p className="text-gray-600 text-sm">
+                                    <strong>Examples:</strong> Unchangeable harmful policies, no audit systems, 
+                                    no feedback loops, bureaucratic lock-in, can't adapt
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                )}
 
-                {/* New Session Form */}
-                <div className="bg-white rounded-lg shadow-lg p-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                        {hasCurrentSession || hasCompletions ? 'Or Start a New Session' : 'Start Your Diagnostic Practice'}
-                    </h2>
-                    <p className="text-gray-700 mb-6">
-                        Please enter your information to begin. This will be used to generate your completion document.
-                    </p>
-                    
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Your Full Name
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.name}
-                                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                placeholder="Jane Doe"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Your Email
-                            </label>
-                            <input
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                placeholder="jane.doe@university.edu"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Course Name
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.course}
-                                onChange={(e) => setFormData({...formData, course: e.target.value})}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                placeholder="PHIL 410: Ethical Design"
-                                required
-                            />
-                        </div>
-                        
+                    <div className="bg-gradient-to-br from-purple-100 to-purple-50 rounded-lg p-8 mb-6">
+                        <h3 className="text-2xl font-bold text-purple-900 mb-4">Your Diagnostic Process</h3>
+                        <p className="text-gray-700 mb-4">
+                            For each case, you'll go through four steps:
+                        </p>
+                        <ol className="space-y-3 text-gray-700">
+                            <li className="flex items-start">
+                                <span className="font-bold text-purple-700 mr-2">1.</span>
+                                <span><strong>Read the case:</strong> Understand the situation, context, and problem</span>
+                            </li>
+                            <li className="flex items-start">
+                                <span className="font-bold text-purple-700 mr-2">2.</span>
+                                <span><strong>Assess each level:</strong> Rate capacity, capability, constructor, and meta-constructor on 0-100 scale</span>
+                            </li>
+                            <li className="flex items-start">
+                                <span className="font-bold text-purple-700 mr-2">3.</span>
+                                <span><strong>Explain your reasoning:</strong> Briefly justify your assessment</span>
+                            </li>
+                            <li className="flex items-start">
+                                <span className="font-bold text-purple-700 mr-2">4.</span>
+                                <span><strong>Compare to expert:</strong> See how your diagnosis matches expert analysis</span>
+                            </li>
+                        </ol>
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-lg p-8">
                         <button
-                            type="submit"
+                            onClick={onComplete}
                             className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
                         >
-                            Start Module 2 →
+                            Continue: Why Diagnosis Matters →
                         </button>
-                    </form>
-                </div>
-            </div>
-        );
-    }
-
-    // Tutorial Screen Component
-    function TutorialScreen({ onComplete }) {
-        return (
-            <div className="fade-in max-w-3xl mx-auto">
-                <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-6">The Diagnostic Framework</h2>
-                    
-                    <div className="space-y-6">
-                        <div className="border-l-4 border-blue-500 pl-6 py-4 bg-blue-50">
-                            <h3 className="text-xl font-bold text-blue-900 mb-2">Level 1: Capacity</h3>
-                            <p className="text-gray-700 mb-2">
-                                <strong>Question:</strong> Is ethical capacity being suppressed by context?
-                            </p>
-                            <p className="text-gray-600 text-sm mb-2">
-                                <strong>Look for:</strong> People who used to perform well, show capacity in other contexts, 
-                                or are under chronic stress/constraint
-                            </p>
-                            <p className="text-gray-600 text-sm">
-                                <strong>Examples:</strong> Burned-out professionals, trauma survivors, people under threat, 
-                                chronic stress, suppressed freedoms
-                            </p>
-                        </div>
-
-                        <div className="border-l-4 border-green-500 pl-6 py-4 bg-green-50">
-                            <h3 className="text-xl font-bold text-green-900 mb-2">Level 2: Capability</h3>
-                            <p className="text-gray-700 mb-2">
-                                <strong>Question:</strong> Do people lack reliable methods for ethical coordination?
-                            </p>
-                            <p className="text-gray-600 text-sm mb-2">
-                                <strong>Look for:</strong> Good intentions but inconsistent performance, vague policies, 
-                                "use your judgment" without training, no clear protocols
-                            </p>
-                            <p className="text-gray-600 text-sm">
-                                <strong>Examples:</strong> Ethics training that doesn't translate to action, unclear procedures, 
-                                lack of practiced skills, no standardized methods
-                            </p>
-                        </div>
-
-                        <div className="border-l-4 border-purple-500 pl-6 py-4 bg-purple-50">
-                            <h3 className="text-xl font-bold text-purple-900 mb-2">Level 3: Constructor</h3>
-                            <p className="text-gray-700 mb-2">
-                                <strong>Question:</strong> Do ethical patterns persist or depend on specific people?
-                            </p>
-                            <p className="text-gray-600 text-sm mb-2">
-                                <strong>Look for:</strong> Things that work when certain people are present but fail when they leave, 
-                                lack of institutionalization, no documentation or training
-                            </p>
-                            <p className="text-gray-600 text-sm">
-                                <strong>Examples:</strong> Charismatic founder syndrome, undocumented practices, 
-                                culture that doesn't persist, knowledge in individuals' heads
-                            </p>
-                        </div>
-
-                        <div className="border-l-4 border-red-500 pl-6 py-4 bg-red-50">
-                            <h3 className="text-xl font-bold text-red-900 mb-2">Level 4: Meta-Constructor</h3>
-                            <p className="text-gray-700 mb-2">
-                                <strong>Question:</strong> Can the system examine and improve itself?
-                            </p>
-                            <p className="text-gray-600 text-sm mb-2">
-                                <strong>Look for:</strong> No review mechanisms, can't learn from mistakes, locked-in policies, 
-                                no safe channels for challenge, no revision authority
-                            </p>
-                            <p className="text-gray-600 text-sm">
-                                <strong>Examples:</strong> Unchangeable harmful policies, no audit systems, 
-                                no feedback loops, bureaucratic lock-in, can't adapt
-                            </p>
-                        </div>
                     </div>
                 </div>
+            );
+        }
 
-                <div className="bg-gradient-to-br from-purple-100 to-purple-50 rounded-lg p-8 mb-6">
-                    <h3 className="text-2xl font-bold text-purple-900 mb-4">Your Diagnostic Process</h3>
-                    <p className="text-gray-700 mb-4">
-                        For each case, you'll go through four steps:
-                    </p>
-                    <ol className="space-y-3 text-gray-700">
-                        <li className="flex items-start">
-                            <span className="font-bold text-purple-700 mr-2">1.</span>
-                            <span><strong>Read the case:</strong> Understand the situation, context, and problem</span>
-                        </li>
-                        <li className="flex items-start">
-                            <span className="font-bold text-purple-700 mr-2">2.</span>
-                            <span><strong>Assess each level:</strong> Rate capacity, capability, constructor, and meta-constructor on 0-100 scale</span>
-                        </li>
-                        <li className="flex items-start">
-                            <span className="font-bold text-purple-700 mr-2">3.</span>
-                            <span><strong>Explain your reasoning:</strong> Briefly justify your assessment</span>
-                        </li>
-                        <li className="flex items-start">
-                            <span className="font-bold text-purple-700 mr-2">4.</span>
-                            <span><strong>Compare to expert:</strong> See how your diagnosis matches expert analysis</span>
-                        </li>
-                    </ol>
-                </div>
+        // Responsibility Screen Component - NEW SECTION
+        function ResponsibilityScreen({ onComplete }) {
+            return (
+                <div className="fade-in max-w-4xl mx-auto">
+                    <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
+                        <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Diagnosis Matters: Ethics and Responsibility</h2>
+                        
+                        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6 mb-6">
+                            <p className="text-lg text-gray-800">
+                                You might be wondering: <strong>Why does it matter which level we diagnose the problem at? 
+                                Can't we just try to fix things and see what works?</strong>
+                            </p>
+                        </div>
 
-                <div className="bg-white rounded-lg shadow-lg p-8">
-                    <button
-                        onClick={onComplete}
-                        className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
-                    >
-                        Continue: Why Diagnosis Matters →
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    // Responsibility Screen Component - NEW SECTION
-    function ResponsibilityScreen({ onComplete }) {
-        return (
-            <div className="fade-in max-w-4xl mx-auto">
-                <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Diagnosis Matters: Ethics and Responsibility</h2>
-                    
-                    <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6 mb-6">
-                        <p className="text-lg text-gray-800">
-                            You might be wondering: <strong>Why does it matter which level we diagnose the problem at? 
-                            Can't we just try to fix things and see what works?</strong>
+                        <p className="text-gray-700 mb-6">
+                            Here's why diagnosis is ethically essential, not just intellectually interesting:
                         </p>
+
+                        <div className="space-y-6 mb-8">
+                            <div className="bg-red-50 p-6 rounded-lg border-l-4 border-red-500">
+                                <h3 className="text-xl font-bold text-red-900 mb-3">1. Misdiagnosis Harms People</h3>
+                                <p className="text-gray-700 mb-3">
+                                    If you misdiagnose a capacity problem as a capability problem, you end up blaming and "training" 
+                                    people who are already trying their best under impossible conditions.
+                                </p>
+                                <p className="text-gray-700">
+                                    <strong>This is not just ineffective—it's a form of injustice.</strong> It's like telling a 
+                                    drowning person they need swimming lessons.
+                                </p>
+                            </div>
+
+                            <div className="bg-orange-50 p-6 rounded-lg border-l-4 border-orange-500">
+                                <h3 className="text-xl font-bold text-orange-900 mb-3">2. Misdiagnosis Wastes Resources</h3>
+                                <p className="text-gray-700">
+                                    Organizations have limited time, money, and attention. If you invest in the wrong intervention 
+                                    (training when you need to change workloads, or changing workloads when you need better procedures), 
+                                    you waste those resources while the real problem persists.
+                                </p>
+                            </div>
+
+                            <div className="bg-purple-50 p-6 rounded-lg border-l-4 border-purple-500">
+                                <h3 className="text-xl font-bold text-purple-900 mb-3">3. Misdiagnosis Protects the Wrong People</h3>
+                                <p className="text-gray-700 mb-3">
+                                    Often, misdiagnosis serves someone's interests. Hospital administrators might prefer to think 
+                                    nurses need compassion training (cheap, blames nurses) rather than admit staffing is inadequate 
+                                    (expensive, blames management).
+                                </p>
+                                <p className="text-gray-700">
+                                    <strong>Correct diagnosis exposes who is actually responsible.</strong>
+                                </p>
+                            </div>
+
+                            <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
+                                <h3 className="text-xl font-bold text-blue-900 mb-3">4. Diagnosis Determines Who Must Act</h3>
+                                <p className="text-gray-700 mb-3">
+                                    Different problems require different people to take action:
+                                </p>
+                                <ul className="space-y-2 text-gray-700">
+                                    <li><strong>Capacity problems:</strong> Those who control contexts (managers, investors, policymakers)</li>
+                                    <li><strong>Capability problems:</strong> Those who design systems and training (educators, process designers)</li>
+                                    <li><strong>Constructor problems:</strong> Those who institutionalize practices (founders, HR, succession planners)</li>
+                                    <li><strong>Meta-constructor problems:</strong> Those who control governance (legislators, boards)</li>
+                                </ul>
+                                <p className="text-gray-700 mt-3">
+                                    If you misdiagnose, you're asking the wrong people to act, and nothing changes.
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
-                    <p className="text-gray-700 mb-6">
-                        Here's why diagnosis is ethically essential, not just intellectually interesting:
-                    </p>
+                    <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-6">The Responsibility Chain</h3>
+                        
+                        <div className="space-y-6">
+                            <div className="bg-gradient-to-r from-blue-100 to-blue-50 p-6 rounded-lg">
+                                <h4 className="text-lg font-bold text-blue-900 mb-2">Capacity Problems → Contextual Responsibility</h4>
+                                <p className="text-gray-700 mb-3">
+                                    <strong>Who has power?</strong> Management, investors, policymakers—those who set workloads, 
+                                    budgets, regulations, and organizational culture
+                                </p>
+                                <p className="text-gray-700 mb-3">
+                                    <strong>Their ethical obligation:</strong> Don't create contexts that systematically degrade capacity. 
+                                    When capacity is suppressed, change the context, don't blame individuals.
+                                </p>
+                                <p className="text-gray-600 text-sm">
+                                    <strong>Traditional ethics connection:</strong> Mill (harm principle), Rawls (justice requires 
+                                    protecting capacity), Care ethics (supporting others requires addressing contexts)
+                                </p>
+                            </div>
 
-                    <div className="space-y-6 mb-8">
-                        <div className="bg-red-50 p-6 rounded-lg border-l-4 border-red-500">
-                            <h3 className="text-xl font-bold text-red-900 mb-3">1. Misdiagnosis Harms People</h3>
-                            <p className="text-gray-700 mb-3">
-                                If you misdiagnose a capacity problem as a capability problem, you end up blaming and "training" 
-                                people who are already trying their best under impossible conditions.
+                            <div className="bg-gradient-to-r from-green-100 to-green-50 p-6 rounded-lg">
+                                <h4 className="text-lg font-bold text-green-900 mb-2">Capability Problems → Training & Systems Responsibility</h4>
+                                <p className="text-gray-700 mb-3">
+                                    <strong>Who has power?</strong> Educators, trainers, process designers, managers—those who 
+                                    develop skills and create protocols
+                                </p>
+                                <p className="text-gray-700 mb-3">
+                                    <strong>Their ethical obligation:</strong> Develop clear, practiced, reliable methods. 
+                                    Don't assume people "should just know" how to do complex things. Provide specifications, not just values.
+                                </p>
+                                <p className="text-gray-600 text-sm">
+                                    <strong>Traditional ethics connection:</strong> Aristotle (virtue requires practice), 
+                                    Confucius (clear rituals maintain coordination), Dewey (learning by doing)
+                                </p>
+                            </div>
+
+                            <div className="bg-gradient-to-r from-purple-100 to-purple-50 p-6 rounded-lg">
+                                <h4 className="text-lg font-bold text-purple-900 mb-2">Constructor Problems → Institutional Design Responsibility</h4>
+                                <p className="text-gray-700 mb-3">
+                                    <strong>Who has power?</strong> Founders, HR, organizational development, succession planners—those 
+                                    who shape and institutionalize culture
+                                </p>
+                                <p className="text-gray-700 mb-3">
+                                    <strong>Their ethical obligation:</strong> Don't let critical practices depend on heroic individuals. 
+                                    Build persistent structures. Document and train systematically.
+                                </p>
+                                <p className="text-gray-600 text-sm">
+                                    <strong>Traditional ethics connection:</strong> Virtue ethics (habit becomes institution), 
+                                    Confucianism (ritual carries patterns forward), Social contract theory (institutions structure interactions)
+                                </p>
+                            </div>
+
+                            <div className="bg-gradient-to-r from-red-100 to-red-50 p-6 rounded-lg">
+                                <h4 className="text-lg font-bold text-red-900 mb-2">Meta-Constructor Problems → Governance Responsibility</h4>
+                                <p className="text-gray-700 mb-3">
+                                    <strong>Who has power?</strong> Legislators, board members, constitutional designers—those who 
+                                    control "the rules about rules"
+                                </p>
+                                <p className="text-gray-700 mb-3">
+                                    <strong>Their ethical obligation:</strong> Build in learning mechanisms, feedback loops, and review processes. 
+                                    Create safe channels for challenge and revision. Include sunset clauses.
+                                </p>
+                                <p className="text-gray-600 text-sm">
+                                    <strong>Traditional ethics connection:</strong> Rawls (justice requires revisable institutions), 
+                                    Kant (kingdom of ends requires self-legislation capacity), Dewey (democratic experimentalism)
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-4">Your Position Determines Your Responsibility</h3>
+                        <p className="text-gray-700 mb-4">
+                            As you develop diagnostic skill, you'll realize:
+                        </p>
+                        <div className="space-y-3 text-gray-700 mb-6">
+                            <div className="flex items-start">
+                                <span className="text-purple-600 mr-2">•</span>
+                                <p>
+                                    If you're a <strong>frontline worker</strong> (like a nurse), your responsibility is to maintain 
+                                    capacity and use capabilities well—but you're not responsible for fixing systemic problems beyond 
+                                    your control
+                                </p>
+                            </div>
+                            <div className="flex items-start">
+                                <span className="text-purple-600 mr-2">•</span>
+                                <p>
+                                    If you're a <strong>manager</strong>, you're responsible for creating contexts that don't degrade 
+                                    capacity and for ensuring people have needed capabilities
+                                </p>
+                            </div>
+                            <div className="flex items-start">
+                                <span className="text-purple-600 mr-2">•</span>
+                                <p>
+                                    If you're an <strong>investor or board member</strong>, you're responsible for resource allocation 
+                                    that makes good practice possible
+                                </p>
+                            </div>
+                            <div className="flex items-start">
+                                <span className="text-purple-600 mr-2">•</span>
+                                <p>
+                                    If you're a <strong>policymaker</strong>, you're responsible for governance structures that enable 
+                                    or prevent ethical functioning
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="bg-gradient-to-br from-purple-100 to-purple-50 p-6 rounded-lg">
+                            <p className="text-lg font-semibold text-purple-900 mb-3">
+                                The diagnostic skill you're developing isn't just academic—it's about knowing where to look, 
+                                what to change, and who needs to act.
                             </p>
                             <p className="text-gray-700">
-                                <strong>This is not just ineffective—it's a form of injustice.</strong> It's like telling a 
-                                drowning person they need swimming lessons.
-                            </p>
-                        </div>
-
-                        <div className="bg-orange-50 p-6 rounded-lg border-l-4 border-orange-500">
-                            <h3 className="text-xl font-bold text-orange-900 mb-3">2. Misdiagnosis Wastes Resources</h3>
-                            <p className="text-gray-700">
-                                Organizations have limited time, money, and attention. If you invest in the wrong intervention 
-                                (training when you need to change workloads, or changing workloads when you need better procedures), 
-                                you waste those resources while the real problem persists.
-                            </p>
-                        </div>
-
-                        <div className="bg-purple-50 p-6 rounded-lg border-l-4 border-purple-500">
-                            <h3 className="text-xl font-bold text-purple-900 mb-3">3. Misdiagnosis Protects the Wrong People</h3>
-                            <p className="text-gray-700 mb-3">
-                                Often, misdiagnosis serves someone's interests. Hospital administrators might prefer to think 
-                                nurses need compassion training (cheap, blames nurses) rather than admit staffing is inadequate 
-                                (expensive, blames management).
-                            </p>
-                            <p className="text-gray-700">
-                                <strong>Correct diagnosis exposes who is actually responsible.</strong>
-                            </p>
-                        </div>
-
-                        <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
-                            <h3 className="text-xl font-bold text-blue-900 mb-3">4. Diagnosis Determines Who Must Act</h3>
-                            <p className="text-gray-700 mb-3">
-                                Different problems require different people to take action:
-                            </p>
-                            <ul className="space-y-2 text-gray-700">
-                                <li><strong>Capacity problems:</strong> Those who control contexts (managers, investors, policymakers)</li>
-                                <li><strong>Capability problems:</strong> Those who design systems and training (educators, process designers)</li>
-                                <li><strong>Constructor problems:</strong> Those who institutionalize practices (founders, HR, succession planners)</li>
-                                <li><strong>Meta-constructor problems:</strong> Those who control governance (legislators, boards)</li>
-                            </ul>
-                            <p className="text-gray-700 mt-3">
-                                If you misdiagnose, you're asking the wrong people to act, and nothing changes.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-6">The Responsibility Chain</h3>
-                    
-                    <div className="space-y-6">
-                        <div className="bg-gradient-to-r from-blue-100 to-blue-50 p-6 rounded-lg">
-                            <h4 className="text-lg font-bold text-blue-900 mb-2">Capacity Problems → Contextual Responsibility</h4>
-                            <p className="text-gray-700 mb-3">
-                                <strong>Who has power?</strong> Management, investors, policymakers—those who set workloads, 
-                                budgets, regulations, and organizational culture
-                            </p>
-                            <p className="text-gray-700 mb-3">
-                                <strong>Their ethical obligation:</strong> Don't create contexts that systematically degrade capacity. 
-                                When capacity is suppressed, change the context, don't blame individuals.
-                            </p>
-                            <p className="text-gray-600 text-sm">
-                                <strong>Traditional ethics connection:</strong> Mill (harm principle), Rawls (justice requires 
-                                protecting capacity), Care ethics (supporting others requires addressing contexts)
-                            </p>
-                        </div>
-
-                        <div className="bg-gradient-to-r from-green-100 to-green-50 p-6 rounded-lg">
-                            <h4 className="text-lg font-bold text-green-900 mb-2">Capability Problems → Training & Systems Responsibility</h4>
-                            <p className="text-gray-700 mb-3">
-                                <strong>Who has power?</strong> Educators, trainers, process designers, managers—those who 
-                                develop skills and create protocols
-                            </p>
-                            <p className="text-gray-700 mb-3">
-                                <strong>Their ethical obligation:</strong> Develop clear, practiced, reliable methods. 
-                                Don't assume people "should just know" how to do complex things. Provide specifications, not just values.
-                            </p>
-                            <p className="text-gray-600 text-sm">
-                                <strong>Traditional ethics connection:</strong> Aristotle (virtue requires practice), 
-                                Confucius (clear rituals maintain coordination), Dewey (learning by doing)
-                            </p>
-                        </div>
-
-                        <div className="bg-gradient-to-r from-purple-100 to-purple-50 p-6 rounded-lg">
-                            <h4 className="text-lg font-bold text-purple-900 mb-2">Constructor Problems → Institutional Design Responsibility</h4>
-                            <p className="text-gray-700 mb-3">
-                                <strong>Who has power?</strong> Founders, HR, organizational development, succession planners—those 
-                                who shape and institutionalize culture
-                            </p>
-                            <p className="text-gray-700 mb-3">
-                                <strong>Their ethical obligation:</strong> Don't let critical practices depend on heroic individuals. 
-                                Build persistent structures. Document and train systematically.
-                            </p>
-                            <p className="text-gray-600 text-sm">
-                                <strong>Traditional ethics connection:</strong> Virtue ethics (habit becomes institution), 
-                                Confucianism (ritual carries patterns forward), Social contract theory (institutions structure interactions)
-                            </p>
-                        </div>
-
-                        <div className="bg-gradient-to-r from-red-100 to-red-50 p-6 rounded-lg">
-                            <h4 className="text-lg font-bold text-red-900 mb-2">Meta-Constructor Problems → Governance Responsibility</h4>
-                            <p className="text-gray-700 mb-3">
-                                <strong>Who has power?</strong> Legislators, board members, constitutional designers—those who 
-                                control "the rules about rules"
-                            </p>
-                            <p className="text-gray-700 mb-3">
-                                <strong>Their ethical obligation:</strong> Build in learning mechanisms, feedback loops, and review processes. 
-                                Create safe channels for challenge and revision. Include sunset clauses.
-                            </p>
-                            <p className="text-gray-600 text-sm">
-                                <strong>Traditional ethics connection:</strong> Rawls (justice requires revisable institutions), 
-                                Kant (kingdom of ends requires self-legislation capacity), Dewey (democratic experimentalism)
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-lg shadow-lg p-8 mb-6">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Your Position Determines Your Responsibility</h3>
-                    <p className="text-gray-700 mb-4">
-                        As you develop diagnostic skill, you'll realize:
-                    </p>
-                    <div className="space-y-3 text-gray-700 mb-6">
-                        <div className="flex items-start">
-                            <span className="text-purple-600 mr-2">•</span>
-                            <p>
-                                If you're a <strong>frontline worker</strong> (like a nurse), your responsibility is to maintain 
-                                capacity and use capabilities well—but you're not responsible for fixing systemic problems beyond 
-                                your control
-                            </p>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-purple-600 mr-2">•</span>
-                            <p>
-                                If you're a <strong>manager</strong>, you're responsible for creating contexts that don't degrade 
-                                capacity and for ensuring people have needed capabilities
-                            </p>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-purple-600 mr-2">•</span>
-                            <p>
-                                If you're an <strong>investor or board member</strong>, you're responsible for resource allocation 
-                                that makes good practice possible
-                            </p>
-                        </div>
-                        <div className="flex items-start">
-                            <span className="text-purple-600 mr-2">•</span>
-                            <p>
-                                If you're a <strong>policymaker</strong>, you're responsible for governance structures that enable 
-                                or prevent ethical functioning
+                                In Module 3 (Design Studio), you'll learn how to design interventions targeted at the right level. 
+                                But you can't design good interventions without accurate diagnosis.
                             </p>
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-purple-100 to-purple-50 p-6 rounded-lg">
-                        <p className="text-lg font-semibold text-purple-900 mb-3">
-                            The diagnostic skill you're developing isn't just academic—it's about knowing where to look, 
-                            what to change, and who needs to act.
+                    <div className="bg-white rounded-lg shadow-lg p-8">
+                        <h3 className="text-xl font-bold text-gray-900 mb-3">Ready to Practice?</h3>
+                        <p className="text-gray-700 mb-6">
+                            Now that you understand why diagnosis matters and how it connects to responsibility and traditional 
+                            ethics, you're ready to develop this skill through practice with real cases.
                         </p>
-                        <p className="text-gray-700">
-                            In Module 3 (Design Studio), you'll learn how to design interventions targeted at the right level. 
-                            But you can't design good interventions without accurate diagnosis.
-                        </p>
+                        <button
+                            onClick={onComplete}
+                            className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                        >
+                            Start Case Studies →
+                        </button>
                     </div>
                 </div>
-
-                <div className="bg-white rounded-lg shadow-lg p-8">
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">Ready to Practice?</h3>
-                    <p className="text-gray-700 mb-6">
-                        Now that you understand why diagnosis matters and how it connects to responsibility and traditional 
-                        ethics, you're ready to develop this skill through practice with real cases.
-                    </p>
-                    <button
-                        onClick={onComplete}
-                        className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
-                    >
-                        Start Case Studies →
-                    </button>
-                </div>
-            </div>
-        );
-    }
+            );
+        }
 
         // Case Workflow Component
         function CaseWorkflow({ caseData, caseNumber, totalCases, onComplete }) {
@@ -1501,18 +1588,14 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
                     setSelectedAnswer(null);
                     setShowFeedback(false);
                 } else {
-                    // Update answers with the final one before completing
-                    const finalAnswers = [...answers, {
-                        questionId: currentQuestion.id,
-                        selected: selectedAnswer,
-                        correct: currentQuestion.correctAnswer,
-                        isCorrect
-                    }];
-                    
-                    const score = finalAnswers.filter(a => a.isCorrect).length;
-                    
+                    const score = answers.filter(a => a.isCorrect).length + (isCorrect ? 1 : 0);
                     onComplete({
-                        answers: finalAnswers,
+                        answers: [...answers, {
+                            questionId: currentQuestion.id,
+                            selected: selectedAnswer,
+                            correct: currentQuestion.correctAnswer,
+                            isCorrect
+                        }],
                         score,
                         total: questions.length
                     });
@@ -1623,22 +1706,6 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
 
         // Completion Screen Component
         function CompletionScreen({ completion, onStartNew, onReview }) {
-            // Guard against completion being undefined if stage is set incorrectly
-            if (!completion) {
-                return (
-                    <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-                        <h2 className="text-2xl font-bold text-red-700 mb-4">Error</h2>
-                        <p className="text-gray-700 mb-6">Could not load completion data. The session may be invalid.</p>
-                        <button
-                            onClick={onStartNew}
-                            className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
-                        >
-                            Start New Session
-                        </button>
-                    </div>
-                );
-            }
-
             const sessionData = completion;
             const studentInfo = completion.studentInfo;
             const overallAccuracy = Math.round(
@@ -1674,7 +1741,6 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
                 )
             };
 
-            // This function is used for both printing and copying
             const generateDocument = () => {
                 const doc = `═══════════════════════════════════════════════════════
     MODULE 2: DIAGNOSTIC PRACTICE
@@ -1696,18 +1762,18 @@ Completion Details:
 PERFORMANCE SUMMARY
 ═══════════════════════════════════════════════════════
 
-Overall Accuracy:       ${finalAccuracy}%
-Required Threshold:     75%
-Status:                 ${passed ? '✓ PASSED' : '✗ DID NOT PASS'}
+Overall Accuracy:      ${finalAccuracy}%
+Required Threshold:    75%
+Status:               ${passed ? '✓ PASSED' : '✗ DID NOT PASS'}
 
-Cases Completed:        ${sessionData.cases.length}/${CASES.length}
-Case Avg Accuracy:      ${overallAccuracy}%
-Pattern Recognition:    ${patternScore}/${patternTotal} correct (${patternPercentage}%)
+Cases Completed:       ${sessionData.cases.length}/${CASES.length}
+Case Avg Accuracy:     ${overallAccuracy}%
+Pattern Recognition:   ${patternScore}/${patternTotal} correct (${patternPercentage}%)
 
 Diagnostic Skill Assessment:
-  Capacity Diagnosis:         ${skillLevels.capacity}
-  Capability Diagnosis:       ${skillLevels.capability}
-  Constructor Diagnosis:      ${skillLevels.constructor}
+  Capacity Diagnosis:        ${skillLevels.capacity}
+  Capability Diagnosis:      ${skillLevels.capability}
+  Constructor Diagnosis:     ${skillLevels.constructor}
   Meta-Constructor Diagnosis: ${skillLevels.metaConstructor}
 
 ═══════════════════════════════════════════════════════
@@ -1752,7 +1818,7 @@ the Ethical Design Diagnostic Practice Module 2.
 
 Document Generated: ${new Date().toLocaleString()}
 Unique Session ID:  ${sessionData.sessionId}
-Version:            Module 2 v1.0
+Version:           Module 2 v1.0
 
 Time Tracking:
   Started:    ${new Date(sessionData.startTime).toLocaleString()}
@@ -1783,10 +1849,8 @@ Generated by Ethical Design Diagnostic Practice Module 2
 `;
                 return doc;
             };
-            
-            // This function creates a self-contained printable document
-            // in a new window, which is more reliable than printing the main page.
-            const printDocument = () => {
+
+            const downloadPDF = () => {
                 const doc = generateDocument();
                 const printWindow = window.open('', '', 'width=800,height=600');
                 printWindow.document.write(`
@@ -1795,63 +1859,24 @@ Generated by Ethical Design Diagnostic Practice Module 2
                         <title>Module 2 Completion Document - ${studentInfo.name}</title>
                         <style>
                             body { font-family: 'Courier New', monospace; padding: 20px; font-size: 12px; line-height: 1.4; }
-                            pre { white-space: pre-wrap; word-wrap: break-word; }
+                            pre { white-space: pre-wrap; }
                         </style>
                     </head>
                     <body>
-                        <pre id="printable-document">${doc}</pre>
+                        <pre>${doc}</pre>
                     </body>
                     </html>
                 `);
                 printWindow.document.close();
                 setTimeout(() => {
-                    printWindow.focus();
                     printWindow.print();
                 }, 250);
             };
 
-            // Shows a toast message instead of alert()
-            const showToast = (message) => {
-                const root = document.getElementById('root');
-                if (!root) return;
-                
-                const messageBox = document.createElement('div');
-                messageBox.textContent = message;
-                messageBox.style = "position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 10px 20px; border-radius: 8px; z-index: 2000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: opacity 0.3s ease;";
-                root.appendChild(messageBox);
-                
-                setTimeout(() => {
-                    messageBox.style.opacity = '0';
-                    setTimeout(() => {
-                        if (root.contains(messageBox)) {
-                            root.removeChild(messageBox);
-                        }
-                    }, 300);
-                }, 2000);
-            };
-
             const copyToClipboard = () => {
                 const doc = generateDocument();
-                // FIX: Replaced alert() with a custom toast message.
-                // Using document.execCommand('copy') as it is more reliable in iFrames
-                // than navigator.clipboard.writeText().
-                try {
-                    const textArea = document.createElement("textarea");
-                    textArea.value = doc;
-                    textArea.style.position = "fixed";  // Avoid scrolling to bottom
-                    textArea.style.top = "0";
-                    textArea.style.left = "0";
-                    textArea.style.opacity = "0";
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    showToast('Completion document copied to clipboard!');
-                } catch (err) {
-                    console.error('Failed to copy text: ', err);
-                    showToast('Failed to copy. See console for details.');
-                }
+                navigator.clipboard.writeText(doc);
+                alert('Completion document copied to clipboard!');
             };
 
             return (
@@ -1934,7 +1959,7 @@ Generated by Ethical Design Diagnostic Practice Module 2
                                 <h4 className="font-semibold text-purple-900 mb-2">Document Includes:</h4>
                                 <ul className="space-y-1 text-gray-700 text-sm">
                                     <li>✓ Overall accuracy: {finalAccuracy}% (Required: 75%)</li>
-                                    <li>✓ All {CASES.length} case diagnoses with expert comparisons</li>
+                                    <li>✓ All 6 case diagnoses with expert comparisons</li>
                                     <li>✓ Your diagnostic reasoning for each case</li>
                                     <li>✓ Pattern recognition results</li>
                                     <li>✓ Skill level assessment</li>
@@ -1944,7 +1969,7 @@ Generated by Ethical Design Diagnostic Practice Module 2
 
                             <div className="space-y-3">
                                 <button
-                                    onClick={printDocument}
+                                    onClick={downloadPDF}
                                     className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center justify-center"
                                 >
                                     <span className="mr-2">📄</span> Download as PDF (Print)
@@ -2048,8 +2073,7 @@ Generated by Ethical Design Diagnostic Practice Module 2
                                 );
                                 const patternScore = completion.patternRecognition.score;
                                 const patternTotal = completion.patternRecognition.answers.length;
-                                const patternPercentage = Math.round((patternScore / patternTotal) * 100);
-                                const finalAccuracy = Math.round(overallAccuracy * 0.9 + patternPercentage * 0.1);
+                                const finalAccuracy = Math.round(overallAccuracy * 0.9 + (patternScore/patternTotal * 100) * 0.1);
                                 const passed = finalAccuracy >= 75;
 
                                 return (
@@ -2083,7 +2107,7 @@ Generated by Ethical Design Diagnostic Practice Module 2
                                         <div className="grid grid-cols-2 gap-4 text-sm">
                                             <div className="bg-gray-50 p-3 rounded">
                                                 <span className="text-gray-600">Cases:</span>
-                                                <span className="ml-2 font-semibold">{completion.cases.length}/{CASES.length}</span>
+                                                <span className="ml-2 font-semibold">{completion.cases.length}/6</span>
                                             </div>
                                             <div className="bg-gray-50 p-3 rounded">
                                                 <span className="text-gray-600">Pattern Recognition:</span>
@@ -2115,73 +2139,28 @@ Generated by Ethical Design Diagnostic Practice Module 2
             );
             const patternScore = completion.patternRecognition.score;
             const patternTotal = completion.patternRecognition.answers.length;
-            const patternPercentage = Math.round((patternScore / patternTotal) * 100);
-            const finalAccuracy = Math.round(overallAccuracy * 0.9 + patternPercentage * 0.1);
+            const finalAccuracy = Math.round(overallAccuracy * 0.9 + (patternScore/patternTotal * 100) * 0.1);
 
-            // This is a simplified generator for the review screen's copy/print buttons.
-            // The full one is in the CompletionScreen component.
             const generateCompletionDocument = (comp) => {
                 const doc = `Module 2 Completion Document for ${comp.studentInfo.name}
 Session ID: ${comp.sessionId}
 Final Accuracy: ${finalAccuracy}%
-Completed: ${new Date(comp.completionTime).toLocaleString()}
-
-(This is a summary. For the full document, please visit the main completion screen.)
-`;
+Completed: ${new Date(comp.completionTime).toLocaleString()}`;
                 return doc;
             };
 
-            const printDocument = () => {
+            const downloadPDF = () => {
                 const doc = generateCompletionDocument(completion);
                 const printWindow = window.open('', '', 'width=800,height=600');
                 printWindow.document.write(`<html><head><title>Completion Document</title></head><body><pre>${doc}</pre></body></html>`);
                 printWindow.document.close();
-                setTimeout(() => {
-                    printWindow.focus();
-                    printWindow.print();
-                }, 250);
-            };
-
-            // Shows a toast message instead of alert()
-            const showToast = (message) => {
-                const root = document.getElementById('root');
-                if (!root) return;
-                
-                const messageBox = document.createElement('div');
-                messageBox.textContent = message;
-                messageBox.style = "position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 10px 20px; border-radius: 8px; z-index: 2000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: opacity 0.3s ease;";
-                root.appendChild(messageBox);
-                
-                setTimeout(() => {
-                    messageBox.style.opacity = '0';
-                    setTimeout(() => {
-                        if (root.contains(messageBox)) {
-                            root.removeChild(messageBox);
-                        }
-                    }, 300);
-                }, 2000);
+                setTimeout(() => printWindow.print(), 250);
             };
 
             const copyToClipboard = () => {
                 const doc = generateCompletionDocument(completion);
-                // FIX: Replaced alert() with a custom toast message.
-                try {
-                    const textArea = document.createElement("textarea");
-                    textArea.value = doc;
-                    textArea.style.position = "fixed";
-                    textArea.style.top = "0";
-                    textArea.style.left = "0";
-                    textArea.style.opacity = "0";
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                    showToast('Summary copied to clipboard!');
-                } catch (err) {
-                    console.error('Failed to copy text: ', err);
-                    showToast('Failed to copy. See console for details.');
-                }
+                navigator.clipboard.writeText(doc);
+                alert('Copied!');
             };
 
             return (
@@ -2217,16 +2196,16 @@ Completed: ${new Date(comp.completionTime).toLocaleString()}
 
                         <div className="flex space-x-3 mb-6">
                             <button
-                                onClick={printDocument}
+                                onClick={downloadPDF}
                                 className="flex-1 bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center justify-center"
                             >
-                                <span className="mr-2">📄</span> Print Summary
+                                <span className="mr-2">📄</span> Download Document
                             </button>
                             <button
                                 onClick={copyToClipboard}
                                 className="flex-1 bg-gray-200 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-300 transition-colors flex items-center justify-center"
                             >
-                                <span className="mr-2">📋</span> Copy Summary
+                                <span className="mr-2">📋</span> Copy to Clipboard
                             </button>
                         </div>
 
@@ -2259,7 +2238,7 @@ Completed: ${new Date(comp.completionTime).toLocaleString()}
 
                         <div className="bg-gray-50 p-6 rounded-lg mb-6">
                             <h4 className="font-semibold text-gray-900 mb-2">Scenario:</h4>
-                            <p className="text-gray-700 text-sm whitespace-pre-line">{caseData.scenario}</p>
+                            <p className="text-gray-700 text-sm whitespace-pre-line">{caseData.scenario.substring(0, 300)}...</p>
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -2342,9 +2321,8 @@ Completed: ${new Date(comp.completionTime).toLocaleString()}
             );
         }
 
-        
+        // Render the app
         ReactDOM.render(<App />, document.getElementById('root'));
-
     </script>
 </body>
 </html>
