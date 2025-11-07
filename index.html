@@ -444,8 +444,28 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
                 <div className="min-h-screen">
                     <header className="gradient-bg text-white shadow-lg">
                         <div className="max-w-5xl mx-auto px-4 py-6">
-                            <h1 className="text-3xl font-bold mb-2">Module 2: Diagnostic Practice</h1>
-                            <p className="text-lg opacity-90">Learn to diagnose ethical problems at the right level</p>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h1 className="text-3xl font-bold mb-2">Module 2: Diagnostic Practice</h1>
+                                    <p className="text-lg opacity-90">Learn to diagnose ethical problems at the right level</p>
+                                </div>
+                                {/* Reset button - visible on all pages except welcome */}
+                                {stage !== 'welcome' && (
+                                    <button
+                                        onClick={() => {
+                                            if (window.confirm('⚠️ This will permanently delete ALL your saved progress and start over from the beginning.\n\nAre you sure you want to reset?')) {
+                                                localStorage.clear();
+                                                window.location.reload();
+                                            }
+                                        }}
+                                        className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-lg font-semibold transition-colors flex items-center space-x-2 whitespace-nowrap text-sm"
+                                        title="Clear all progress and start over"
+                                    >
+                                        <span>🔄</span>
+                                        <span>Start Over</span>
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </header>
 
@@ -496,19 +516,6 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
                 e.preventDefault();
                 if (formData.name && formData.email && formData.course) {
                     onStart(formData);
-                }
-            };
-
-            // Check if there's saved progress
-            const hasSavedProgress = () => {
-                return localStorage.getItem('module2Progress') !== null;
-            };
-
-            // Reset all progress
-            const handleReset = () => {
-                if (window.confirm('This will permanently delete ALL your saved progress and start completely fresh. Are you sure?')) {
-                    localStorage.clear();
-                    window.location.reload();
                 }
             };
 
@@ -625,23 +632,6 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
                             </button>
                         </form>
                     </div>
-
-                    {/* Reset Button - Only shown if there's saved progress */}
-                    {hasSavedProgress() && (
-                        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 mt-6">
-                            <h3 className="text-lg font-bold text-red-900 mb-3">⚠️ Start Completely Over?</h3>
-                            <p className="text-gray-700 mb-4 text-sm">
-                                If you want to practice from scratch and delete all saved progress, click below. 
-                                <strong> This cannot be undone.</strong>
-                            </p>
-                            <button
-                                onClick={handleReset}
-                                className="w-full bg-red-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-red-700 transition-colors"
-                            >
-                                🗑️ Clear All Progress & Start Fresh
-                            </button>
-                        </div>
-                    )}
                 </div>
             );
         }
