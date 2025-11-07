@@ -479,14 +479,15 @@ The context: Religious beliefs vs. medical judgment, child cannot consent, serio
                         {stage === 'responsibility' && (
                             <ResponsibilityScreen onComplete={startCases} />
                         )}
-                        {stage === 'cases' && (
-                            <CaseWorkflow 
-                                caseData={CASES[currentCaseIndex]}
-                                caseNumber={currentCaseIndex + 1}
-                                totalCases={CASES.length}
-                                onComplete={completeCaseWork}
-                            />
-                        )}
+                       {stage === 'cases' && (
+    <CaseWorkflow 
+        key={currentCaseIndex}
+        caseData={CASES[currentCaseIndex]}
+        caseNumber={currentCaseIndex + 1}
+        totalCases={CASES.length}
+        onComplete={completeCaseWork}
+    />
+)}
                         {stage === 'pattern' && (
                             <PatternRecognitionGame 
                                 questions={PATTERN_QUESTIONS}
